@@ -1,0 +1,24 @@
+{
+  "name": "acv-guard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ACV-Guard stroke risk monitoring MVP",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "mobile": "pnpm --filter mobile start",
+    "build": "pnpm --filter web build",
+    "lint": "pnpm -r lint",
+    "type-check": "pnpm -r type-check"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  }
+}

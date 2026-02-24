@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "ACV-Guard",
+    "slug": "acv-guard",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.acvguard.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "ACV-Guard necesita tu ubicación para compartirla en caso de emergencia.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "ACV-Guard puede compartir tu ubicación en segundo plano para emergencias.",
+        "NSHealthShareUsageDescription": "ACV-Guard necesita acceso a tus datos de salud para monitorear signos vitales y detectar anomalías.",
+        "NSHealthUpdateUsageDescription": "ACV-Guard necesita actualizar tus datos de salud para registrar eventos."
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.access": []
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.acvguard.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "ACTIVITY_RECOGNITION",
+        "BODY_SENSORS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-location",
+      "expo-sensors",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "acv-guard-local"
+      }
+    }
+  }
+}

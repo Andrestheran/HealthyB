@@ -1,0 +1,148 @@
+.container {
+  min-height: 100vh;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 18px;
+  color: #666;
+}
+
+.header {
+  background: white;
+  padding: 20px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #e74c3c;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+}
+
+.logoutButton {
+  padding: 10px 20px;
+  background-color: #95a5a6;
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.logoutButton:hover {
+  background-color: #7f8c8d;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.alertsHeader {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.alertsHeader h2 {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.count {
+  background-color: #e74c3c;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.empty {
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+  margin-top: 40px;
+}
+
+.alertsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.alertCard {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.alertCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.alertHeader {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.severityBadge {
+  padding: 6px 12px;
+  border-radius: 12px;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.statusBadge {
+  padding: 6px 12px;
+  border-radius: 12px;
+  background-color: #ecf0f1;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.patientName {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.alertType {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.alertDate {
+  font-size: 12px;
+  color: #999;
+}
+
+.locationBadge {
+  margin-top: 12px;
+  padding: 8px 0;
+  font-size: 12px;
+  color: #3498db;
+}
