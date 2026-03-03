@@ -6,7 +6,7 @@ import AppleHealthKit, {
   HealthValue,
   HealthKitPermissions,
 } from 'react-native-health';
-import { VitalSignType, SmartwatchType } from '@acv-guard/shared';
+import { VitalSignType, SmartwatchType } from '@alert-io/shared';
 
 // Health permissions
 const permissions: HealthKitPermissions = {

@@ -37,7 +37,7 @@ export default function LoginPage() {
   return (
     <div className={styles.container}>
       <div className={styles.loginBox}>
-        <h1 className={styles.title}>ACV-Guard Portal</h1>
+        <h1 className={styles.title}>Alert-IO Portal</h1>
         <p className={styles.subtitle}>Portal para cuidadores y clínicos</p>
 
         <form onSubmit={handleLogin} className={styles.form}>

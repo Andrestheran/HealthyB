@@ -1,10 +1,13 @@
-# ACV-Guard MVP
+# Alert-IO MVP
 
-ACV-Guard es una aplicación móvil (iOS/Android) para monitoreo de riesgo de ACV (accidente cerebrovascular), con un portal web mínimo para cuidadores y clínicos. Este MVP incluye:
+Alert-IO es una aplicación móvil (iOS/Android) para monitoreo de riesgo de ACV (accidente cerebrovascular), con un portal web mínimo para cuidadores y clínicos. Este MVP incluye:
 
 - **Aplicación móvil principal** (React Native + Expo)
 - **Portal web secundario** (Next.js) para alertas
 - **Backend completo** (Supabase: Postgres + Auth + RLS + Edge Functions)
+- **Integración con smartwatches** (Apple Watch + Wear OS) ⌚
+- **Detección automática de caídas** 🚨
+- **Monitoreo de signos vitales** (FC, presión arterial, SpO2, etc.) ❤️
 - **Notificaciones push** (Expo Push)
 - **Compartir ubicación** para emergencias
 
@@ -19,6 +22,7 @@ ACV-Guard es una aplicación móvil (iOS/Android) para monitoreo de riesgo de AC
 - [Instalación](#instalación)
 - [Configuración](#configuración)
 - [Ejecutar en Desarrollo](#ejecutar-en-desarrollo)
+- [Integración con Smartwatches](#integración-con-smartwatches)
 - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Cuentas Demo](#cuentas-demo)
 - [Flujo de Usuario](#flujo-de-usuario)
@@ -34,15 +38,17 @@ ACV-Guard es una aplicación móvil (iOS/Android) para monitoreo de riesgo de AC
 - **Móvil**: React Native (Expo) + TypeScript
 - **Web**: Next.js 14 (App Router) + TypeScript
 - **Backend**: Supabase (Postgres, Auth, RLS, Edge Functions)
+- **Smartwatch**: HealthKit (iOS) + Health Connect (Android)
+- **Sensores**: Acelerómetro para detección de caídas
 - **Notificaciones**: Expo Push Notifications
 - **Validación**: Zod
 - **Data Fetching**: TanStack Query (React Query)
-- **Monorepo**: pnpm workspaces + Turborepo
+- **Monorepo**: pnpm workspaces
 
 ### Base de Datos
 
 - **Postgres** con Row Level Security (RLS)
-- **Enums**: roles, estados de alerta, severidad, tipos de eventos
+- **Enums**: roles, estados de alerta, severidad, tipos de eventos, tipos de signos vitales
 - **Tablas principales**:
   - `profiles` - Usuario + rol
   - `patients` - Datos del paciente
@@ -56,21 +62,33 @@ ACV-Guard es una aplicación móvil (iOS/Android) para monitoreo de riesgo de AC
   - `alert_recipients` - Destinatarios de alertas
   - `locations` - Última ubicación conocida
   - `devices` - Tokens de push notification
+  - **`smartwatch_devices`** - Dispositivos vinculados ⌚
+  - **`vital_signs`** - Signos vitales (FC, SpO2, pasos, etc.)
+  - **`blood_pressure_readings`** - Lecturas de presión arterial
+  - **`fall_detections`** - Caídas detectadas automáticamente
+  - **`health_anomalies`** - Anomalías detectadas (FC anormal, crisis hipertensiva)
 
 ### Edge Functions (Supabase)
 
 1. **create_alert** - Crea alertas desde SOS, BE-FAST, o reporte de síntomas
 2. **update_alert_status** - Actualiza estado de alertas (acknowledged, escalated, closed)
 3. **ingest_location** - Guarda ubicación del paciente
+4. **ingest_vitals** - Recibe y almacena signos vitales desde smartwatches ⌚
+5. **report_fall** - Maneja detección de caídas y crea alertas HIGH 🚨
 
 ### Lógica de Alertas
 
 - **SOS**: siempre crea alerta HIGH
+- **Caída detectada**: siempre crea alerta HIGH 🚨
 - **BE-FAST check-in**:
   - Síntomas mayores (Face, Arm, Speech) → HIGH
   - 2+ síntomas menores (Balance, Eyes) O AFib + cualquier síntoma → MEDIUM
   - Otros casos → LOW (solo registra evento, sin alerta)
 - **Reporte de síntomas**: MEDIUM por defecto
+- **Anomalías de salud**:
+  - FC >150 o <40 bpm → HIGH
+  - Presión arterial >180/120 → HIGH (crisis hipertensiva)
+  - FC anormal con AFib → MEDIUM
 
 ---
 
@@ -79,68 +97,85 @@ ACV-Guard es una aplicación móvil (iOS/Android) para monitoreo de riesgo de AC
 1. **Node.js** >= 18
 2. **pnpm** >= 8 (instalar con `npm install -g pnpm`)
 3. **Supabase CLI** (instalar con `brew install supabase/tap/supabase` o ver [docs](https://supabase.com/docs/guides/cli))
-4. **Docker** (para Supabase local)
+4. **Docker Desktop** (para Supabase local) - [Descargar aquí](https://www.docker.com/products/docker-desktop)
 5. **Expo CLI** (se instala automáticamente)
 6. **iOS Simulator** (macOS) o **Android Studio** para emuladores
+
+### Para Smartwatch (Opcional)
+- **iPhone físico** + **Apple Watch** pareado (HealthKit no funciona en simulador)
+- **Android físico** con Wear OS (para Health Connect)
 
 ---
 
 ## 🚀 Instalación
 
-### 1. Clonar e instalar dependencias
+### 1. Instalar dependencias
 
 ```bash
 # En la raíz del proyecto
+cd /Users/andrestheran/Desktop/HB
 pnpm install
 ```
 
 Esto instalará todas las dependencias del monorepo (móvil, web, shared).
 
-### 2. Iniciar Supabase local
+### 2. Iniciar Docker Desktop
 
 ```bash
-# En la raíz del proyecto
+# Abrir Docker Desktop
+open /Applications/Docker.app
+
+# Esperar 30-60 segundos a que inicie
+```
+
+### 3. Iniciar Supabase local
+
+```bash
+# Iniciar Supabase (primera vez toma 5-10 minutos)
 supabase start
 ```
 
-Este comando:
-- Descarga imágenes de Docker necesarias (primera vez)
-- Inicia Postgres, Auth, Storage, Edge Functions
-- Aplica migraciones automáticamente
-- Muestra credenciales locales
+**⚠️ Primera vez**: Descarga imágenes de Docker (~2GB). Espera pacientemente.
 
-**Guarda las credenciales que se muestran**, especialmente:
-- `API URL`: http://127.0.0.1:54321
-- `anon key`: (clave larga)
-- `service_role key`: (solo para Edge Functions)
+**✅ Cuando termine, verás**:
 
-### 3. Crear cuentas demo (opcional pero recomendado)
+```
+Started supabase local development setup.
 
-Las cuentas demo se deben crear manualmente en Supabase Studio:
+╭──────────────────────────────────────╮
+│ 🔧 Development Tools                 │
+├─────────┬────────────────────────────┤
+│ Studio  │ http://127.0.0.1:54323     │
+╰─────────┴────────────────────────────╯
 
-1. Abre Supabase Studio: http://localhost:54323
-2. Ve a **Authentication** → **Users**
-3. Crea los siguientes usuarios:
+╭──────────────────────────────────────────────────────╮
+│ 🌐 APIs                                              │
+├────────────────┬─────────────────────────────────────┤
+│ Project URL    │ http://127.0.0.1:54321              │
+╰────────────────┴─────────────────────────────────────╯
 
-   - **Paciente**:
-     - Email: `patient_demo@acvguard.test`
-     - Password: `Password123!`
-
-   - **Cuidador**:
-     - Email: `caregiver_demo@acvguard.test`
-     - Password: `Password123!`
-
-   - **Clínico**:
-     - Email: `clinician_demo@acvguard.test`
-     - Password: `Password123!`
-
-4. Ejecuta el seed SQL para datos de prueba:
-
-```bash
-psql postgresql://postgres:postgres@localhost:54322/postgres < supabase/seed.sql
+╭──────────────────────────────────────────────────────────────╮
+│ 🔑 Authentication Keys                                       │
+├─────────────┬────────────────────────────────────────────────┤
+│ Publishable │ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...       │
+│ Secret      │ [Tu secret key - solo para desarrollo local]  │
+╰─────────────┴────────────────────────────────────────────────╯
 ```
 
-O copia/pega el contenido de `supabase/seed.sql` en el SQL Editor de Studio.
+**🔑 IMPORTANTE**: Copia el **Publishable key** (equivalente al "anon key"). Lo necesitarás en el siguiente paso.
+
+### 4. Verificar migraciones
+
+```bash
+# Ver migraciones aplicadas
+supabase migration list
+
+# Deberías ver 4 migraciones:
+# - 20240101000000_initial_schema.sql
+# - 20240101000001_rls_policies.sql
+# - 20240101000002_helper_functions.sql
+# - 20240101000003_smartwatch_integration.sql ⌚
+```
 
 ---
 
@@ -148,69 +183,134 @@ O copia/pega el contenido de `supabase/seed.sql` en el SQL Editor de Studio.
 
 ### Variables de Entorno
 
+Los archivos `.env` ya están creados con las claves correctas. Si necesitas actualizarlos:
+
 #### Aplicación Móvil (`apps/mobile/.env`)
 
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-EXPO_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key-aqui
+EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
 ```
 
 #### Portal Web (`apps/web/.env`)
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key-aqui
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
 ```
 
-**IMPORTANTE**: Reemplaza `tu-anon-key-aqui` con la clave `anon key` que se mostró al ejecutar `supabase start`.
-
-### Archivos .env.example
-
-Ya existen archivos `.env.example` en cada app. Cópialos y renómbralos:
-
-```bash
-cp apps/mobile/.env.example apps/mobile/.env
-cp apps/web/.env.example apps/web/.env
-```
-
-Luego edita y agrega las credenciales.
+**⚠️ Reemplaza** el valor de `*_ANON_KEY` con el **Publishable key** que obtuviste al ejecutar `supabase start`.
 
 ---
 
 ## 💻 Ejecutar en Desarrollo
 
-### Móvil (Expo)
+### Crear Usuarios Demo (Solo Primera Vez)
 
-En una terminal:
+1. Abre Supabase Studio:
+```bash
+open http://127.0.0.1:54323
+```
+
+2. Ve a **Authentication** → **Users** → **Add user**
+
+3. Crea estos 3 usuarios:
+
+**Paciente**:
+- Email: `patient_demo@acvguard.test`
+- Password: `Password123!`
+- ✅ Auto Confirm User: **activado**
+
+**Cuidador**:
+- Email: `caregiver_demo@acvguard.test`
+- Password: `Password123!`
+- ✅ Auto Confirm User: **activado**
+
+**Clínico**:
+- Email: `clinician_demo@acvguard.test`
+- Password: `Password123!`
+- ✅ Auto Confirm User: **activado**
+
+### Ejecutar Aplicaciones
+
+#### Terminal 1: Móvil (Expo)
 
 ```bash
 pnpm mobile
 ```
 
-Esto inicia el servidor Expo. Opciones:
-- Presiona `i` para abrir en iOS Simulator
-- Presiona `a` para abrir en Android Emulator
-- Escanea el QR con Expo Go en tu dispositivo físico
+Opciones:
+- Presiona `i` para iOS Simulator
+- Presiona `a` para Android Emulator
+- Escanea QR con Expo Go en dispositivo físico
 
-**Nota sobre notificaciones**: Las notificaciones push requieren dispositivo físico. En simuladores/emuladores no funcionarán.
+**⚠️ Para probar HealthKit**: Requiere iPhone físico con Apple Watch. Ejecutar:
+```bash
+npx expo run:ios --device
+```
 
-### Web (Next.js)
-
-En otra terminal:
+#### Terminal 2: Web (Next.js)
 
 ```bash
 pnpm dev
 ```
 
-Abre http://localhost:3000 en tu navegador.
+Abre http://localhost:3000
 
-### Supabase Edge Functions (opcional para desarrollo)
+---
 
-Las Edge Functions ya están disponibles en Supabase local. Para ver logs:
+## ⌚ Integración con Smartwatches
 
-```bash
-supabase functions serve create_alert --env-file ./supabase/.env.local
-```
+### Funcionalidades Implementadas
+
+#### 1. **Monitoreo de Signos Vitales**
+- ❤️ Frecuencia cardíaca
+- 🩺 Presión arterial (sistólica/diastólica)
+- 🫁 Oxígeno en sangre (SpO2)
+- 👣 Pasos diarios
+- 😴 Horas de sueño
+
+#### 2. **Detección Automática de Caídas**
+- Usa acelerómetro del dispositivo (10 Hz)
+- Detecta patrón: impacto alto (>2.5G) + quietud (3 segundos)
+- Crea alerta HIGH automáticamente
+- Captura ubicación GPS
+- Notifica contactos inmediatamente
+
+#### 3. **Detección de Anomalías**
+- FC >150 o <40 bpm → Anomalía HIGH
+- Presión >180/120 mmHg → Crisis hipertensiva HIGH
+- Con AFib: umbrales más sensibles
+
+### Plataformas Soportadas
+
+#### iOS - HealthKit ✅
+- **Completamente implementado**
+- Requiere iPhone físico (no funciona en simulador)
+- Lee datos de Apple Watch automáticamente
+- Permisos configurados en `app.json`
+
+#### Android - Health Connect 🚧
+- **Estructura implementada**
+- Requiere integración final con Health Connect SDK
+- Compatible con Wear OS watches
+
+### Uso en la App
+
+1. **Login como paciente**
+2. **Ir a pestaña "Signos"** (2da pestaña)
+3. **Vincular Smartwatch**: Detecta Apple Watch/Wear OS automáticamente
+4. **Sincronizar Datos**: Lee HealthKit y sube a backend
+5. **Activar Detección de Caídas**: Toggle para monitoreo continuo
+
+### Documentación Completa
+
+Ver **[SMARTWATCH_INTEGRATION.md](SMARTWATCH_INTEGRATION.md)** para:
+- Arquitectura detallada
+- Pruebas end-to-end
+- Troubleshooting
+- Queries SQL útiles
+- Roadmap futuro
 
 ---
 
@@ -219,47 +319,52 @@ supabase functions serve create_alert --env-file ./supabase/.env.local
 ```
 acv-guard/
 ├── apps/
-│   ├── mobile/              # React Native (Expo)
+│   ├── mobile/              # React Native (Expo) - MAIN APP
 │   │   ├── src/
 │   │   │   ├── contexts/    # AuthContext
-│   │   │   ├── lib/         # Supabase client, notificaciones
+│   │   │   ├── lib/         # Supabase, notifications, healthKit ⌚, fallDetection 🚨
 │   │   │   ├── navigation/  # AppNavigator
-│   │   │   └── screens/     # Pantallas (auth, patient, alerts, settings)
+│   │   │   └── screens/     # Auth, patient, alerts, settings
+│   │   │       └── patient/
+│   │   │           └── VitalsMonitorScreen.tsx  # Monitoreo de signos vitales ⌚
 │   │   ├── App.tsx
-│   │   ├── app.json
+│   │   ├── app.json         # Permisos HealthKit + sensores
 │   │   └── package.json
 │   │
-│   └── web/                 # Next.js portal
+│   └── web/                 # Next.js portal (minimal)
 │       ├── src/
 │       │   ├── app/         # App Router (login, dashboard, alert/[id])
 │       │   └── lib/         # Supabase client
 │       └── package.json
 │
 ├── packages/
-│   └── shared/              # Tipos, esquemas Zod, enums
+│   └── shared/              # Tipos, Zod schemas, enums
 │       ├── src/
-│       │   ├── enums.ts
-│       │   ├── types.ts
-│       │   ├── schemas.ts
+│       │   ├── enums.ts     # + SmartwatchType, VitalSignType
+│       │   ├── types.ts     # + 5 interfaces smartwatch
+│       │   ├── schemas.ts   # + 6 schemas smartwatch
 │       │   └── index.ts
 │       └── package.json
 │
 ├── supabase/
 │   ├── config.toml
-│   ├── migrations/          # Migraciones SQL
+│   ├── migrations/
 │   │   ├── 20240101000000_initial_schema.sql
 │   │   ├── 20240101000001_rls_policies.sql
-│   │   └── 20240101000002_helper_functions.sql
+│   │   ├── 20240101000002_helper_functions.sql
+│   │   └── 20240101000003_smartwatch_integration.sql  # ⌚ 5 nuevas tablas
 │   ├── functions/           # Edge Functions (Deno)
 │   │   ├── create_alert/
 │   │   ├── update_alert_status/
-│   │   └── ingest_location/
+│   │   ├── ingest_location/
+│   │   ├── ingest_vitals/   # ⌚ Sincronizar signos vitales
+│   │   └── report_fall/     # 🚨 Reportar caídas
 │   └── seed.sql
 │
-├── package.json             # Root con workspaces
+├── package.json
 ├── pnpm-workspace.yaml
-├── turbo.json
-└── README.md
+├── README.md
+└── SMARTWATCH_INTEGRATION.md  # ⌚ Documentación completa de smartwatches
 ```
 
 ---
@@ -274,14 +379,9 @@ acv-guard/
 | Cuidador  | caregiver_demo@acvguard.test      | Password123!  |
 | Clínico   | clinician_demo@acvguard.test      | Password123!  |
 
-### Datos Precargados (Paciente Demo)
+### Datos Precargados
 
-- **Nombre**: María García
-- **Factores de riesgo**: Hipertensión, AFib, Dislipidemia
-- **Medicamentos**: Losartán, Aspirina, Atorvastatina
-- **Alergias**: Penicilina, Mariscos
-- **Contactos de emergencia**: 2 contactos
-- **Consentimientos**: Cuidador y Clínico tienen permisos completos
+Los usuarios se crean vacíos. El **paciente completa su perfil** durante el onboarding en la app móvil.
 
 ---
 
@@ -297,34 +397,29 @@ acv-guard/
    - Botón SOS grande (emergencia inmediata)
    - Botón "Revisión BE-FAST"
    - Acciones rápidas (compartir ubicación, ver historial)
-4. **BE-FAST Check-in**:
+4. **Pestaña "Signos"** ⌚:
+   - Vincular smartwatch (Apple Watch/Wear OS)
+   - Sincronizar datos de salud
+   - Ver signos vitales en tiempo real
+   - Activar/desactivar detección de caídas
+5. **BE-FAST Check-in**:
    - Responder 5 preguntas (Balance, Eyes, Face, Arm, Speech)
-   - Opcional: notas
-   - Se captura ubicación automáticamente
-5. **Alertas automáticas**:
-   - Se crean según severidad
-   - Notificaciones push a contactos + cuidadores/clínicos con consentimiento
-6. **Historial**: Ver eventos (check-ins, SOS, cambios de estado)
-7. **Ubicación**: Compartir ubicación manualmente o habilitar fondo
+   - Alertas automáticas según severidad
+6. **Historial**: Ver eventos (check-ins, SOS, caídas, cambios de estado)
 
 ### Cuidador / Clínico
 
 1. **Login** → Web o móvil
 2. **Inbox de Alertas**:
-   - Ver todas las alertas activas
+   - Ver todas las alertas activas (incluye caídas detectadas 🚨)
    - Filtro por estado
    - Refresh automático cada 10s
 3. **Detalle de Alerta**:
    - Tarjeta de emergencia del paciente
    - Factores de riesgo, medicamentos, alergias
-   - Ubicación en mapa (si disponible)
-   - Acciones:
-     - "Reconocer" (triggered → acknowledged)
-     - "Escalar" (acknowledged → escalated)
-     - "Cerrar" (acknowledged → closed)
-4. **Notificaciones push** cuando:
-   - Nueva alerta
-   - Cambio de estado
+   - **Signos vitales recientes** ⌚
+   - Ubicación en mapa
+   - Acciones: Reconocer / Escalar / Cerrar
 
 ---
 
@@ -333,47 +428,39 @@ acv-guard/
 ### Escenario 1: SOS Emergencia
 
 1. Login como **paciente** (móvil)
-2. En Home, presiona el botón **"SOS EMERGENCIA"**
+2. Presiona **"SOS EMERGENCIA"**
 3. Confirma
-4. Resultado esperado:
-   - Alerta HIGH creada
-   - Notificación enviada a cuidador + clínico
-5. Login como **clínico** (web o móvil)
-6. Ver inbox → debe aparecer nueva alerta HIGH
-7. Abrir detalle → ver tarjeta de emergencia
-8. "Reconocer Alerta"
-9. Login como **paciente** → ver en historial el cambio de estado
+4. **Resultado**: Alerta HIGH creada, notificaciones enviadas
+5. Login como **clínico** (web) → Ver alerta en inbox
 
-### Escenario 2: BE-FAST con Síntoma Mayor
+### Escenario 2: Vincular Apple Watch y Sincronizar ⌚
 
-1. Login como **paciente** (móvil)
-2. Home → "Revisión BE-FAST"
-3. Marca **Face = SÍ** (síntoma mayor)
-4. Enviar
-5. Resultado esperado:
-   - Alerta HIGH creada (Face es síntoma mayor)
-   - Notificaciones enviadas
-6. Clínico recibe alerta en inbox
-7. Puede ver detalles del check-in y tomar acción
+**Requisitos**: iPhone físico + Apple Watch pareado
 
-### Escenario 3: BE-FAST sin Síntomas Mayores
+1. Login como **paciente** (iPhone)
+2. Ir a pestaña **"Signos"**
+3. Presionar **"Vincular Smartwatch"**
+4. Aceptar permisos HealthKit
+5. Presionar **"🔄 Sincronizar Datos"**
+6. **Resultado**: Signos vitales aparecen en tarjetas
+7. Verificar en DB: `SELECT * FROM vital_signs`
 
-1. Login como **paciente**
-2. BE-FAST → marca solo **Balance = SÍ, Eyes = SÍ** (2 menores)
-3. Enviar
-4. Resultado esperado:
-   - Alerta MEDIUM (2+ síntomas menores)
-   - Si el paciente tiene AFib en factores de riesgo → MEDIUM
-5. Si solo 1 síntoma menor → solo registra evento (no alerta)
+### Escenario 3: Detección de Caída 🚨
 
-### Escenario 4: Ubicación
+1. Activar **"Detección de Caídas"** en pestaña Signos
+2. **Simular caída**: Agitar teléfono bruscamente y dejarlo quieto
+3. **Resultado**:
+   - Consola: "Fall detected!"
+   - Alerta HIGH creada automáticamente
+   - Notificaciones enviadas con ubicación
+4. Login como **clínico** (web) → Ver alerta "fall_detection"
 
-1. Login como **paciente**
-2. "Compartir Ubicación Ahora"
-3. Aceptar permisos
-4. Ubicación guardada
-5. Login como **clínico** → ver alerta con ubicación
-6. Clic "Abrir en Google Maps" → debe abrir mapa con coordenadas
+### Escenario 4: Anomalía de FC
+
+1. Paciente con AFib en factores de riesgo
+2. Simular FC alta (ingresar en HealthKit o modificar threshold)
+3. Sincronizar datos
+4. **Resultado**: Registro en `health_anomalies`, tipo "abnormal_heart_rate"
 
 ---
 
@@ -381,59 +468,95 @@ acv-guard/
 
 ### Limitaciones del MVP
 
-- **Solo ubicación manual**: No hay tracking continuo en segundo plano (iOS/Android limitan esto)
-- **Notificaciones push**: Solo Expo Push (no SMS/email)
-- **Sin smartwatch**: Detección de caídas y monitoreo continuo requiere integración con wearables
-- **Sin diagnóstico**: Esta app NO diagnostica ACV, solo registra síntomas y alerta
-- **Onboarding simplificado**: Faltan pasos (agregar medicamentos manualmente, consentimientos detallados)
-- **Sin verificación de identidad**: No hay KYC para clínicos
-- **Sin HIPAA/compliance**: Este MVP no cumple regulaciones médicas para producción
+- **HealthKit solo en dispositivo físico**: No funciona en simulador iOS
+- **Android Health Connect**: Solo estructura, requiere implementación final
+- **Sin sincronización automática**: Usuario debe presionar "Sincronizar"
+- **Detección de caídas básica**: No tan precisa como Apple Watch nativa
+- **Sin gráficos de tendencia**: Solo valores actuales
+- **Notificaciones push básicas**: Sin SMS/email alternativo
+- **Sin videollamada**: No hay integración con telemedicina
+- **No es herramienta diagnóstica**: Disclaimer legal requerido
 
 ### Próximos Pasos (Post-MVP)
 
 #### Funcionalidades
-- [ ] Integración con smartwatch (Apple Watch, Wear OS)
-- [ ] SMS/email como canal de notificación alternativo
-- [ ] Videollamada con médico desde la app
-- [ ] Histórico de signos vitales (presión arterial, frecuencia cardíaca)
+- [ ] Health Connect completo para Android
+- [ ] Wear OS app companion nativa
+- [ ] Apple Watch app nativa (WatchOS)
+- [ ] Gráficos de tendencia de signos vitales
+- [ ] Sincronización automática en background
+- [ ] SMS/email como canal alternativo
+- [ ] Videollamada con médico
 - [ ] Recordatorios de medicamentos
-- [ ] Onboarding completo (medicamentos, consentimientos granulares)
-- [ ] Búsqueda de clínicos por especialidad
-- [ ] Dashboard de administrador
+- [ ] Detección de AFib con ECG (HealthKit)
 
 #### Infraestructura
-- [ ] CI/CD para mobile (EAS Build + Submit)
-- [ ] CI/CD para web (Vercel/Netlify)
-- [ ] Monitoreo y logging (Sentry, DataDog)
-- [ ] Métricas de negocio (alertas creadas, tiempo de respuesta)
-- [ ] Backups automáticos de DB
-- [ ] Rate limiting en Edge Functions
-- [ ] WebSockets para notificaciones en tiempo real (en lugar de polling)
+- [ ] CI/CD para mobile (EAS Build)
+- [ ] CI/CD para web (Vercel)
+- [ ] Monitoreo (Sentry, DataDog)
+- [ ] Métricas de negocio
+- [ ] Backups automáticos
+- [ ] Rate limiting
+- [ ] WebSockets para notificaciones
 
 #### Producción
-- [ ] Supabase production instance
-- [ ] Dominio custom + SSL
-- [ ] Apple Developer + Google Play Developer accounts
-- [ ] Revisión legal y compliance (HIPAA, GDPR, Ley 1581 Colombia)
-- [ ] Pruebas de penetración y auditoría de seguridad
-- [ ] Plan de contingencia y DR
-
-#### UX/UI
-- [ ] Diseño profesional con Figma
-- [ ] Internacionalización (i18n) más idiomas
-- [ ] Modo oscuro
-- [ ] Accesibilidad (a11y) completo
-- [ ] Animaciones y transiciones
+- [ ] Supabase production
+- [ ] Dominio + SSL
+- [ ] Apple Developer + Google Play
+- [ ] Compliance (HIPAA, GDPR, Ley 1581 Colombia)
+- [ ] Auditoría de seguridad
+- [ ] Plan de contingencia
 
 ---
 
-## 📞 Soporte
+## 🎯 Comandos Rápidos
 
-Este es un MVP de demostración. Para preguntas o issues:
+```bash
+# ===== Instalación =====
+pnpm install                 # Instalar todo
 
-- Revisa el código en `/apps` y `/packages`
-- Consulta la documentación de [Supabase](https://supabase.com/docs)
-- Consulta la documentación de [Expo](https://docs.expo.dev/)
+# ===== Docker =====
+open /Applications/Docker.app  # Abrir Docker Desktop
+
+# ===== Supabase =====
+supabase start               # Iniciar local
+supabase stop                # Detener
+supabase status              # Ver estado
+supabase db reset            # Reset DB (reaplica migraciones)
+open http://127.0.0.1:54323  # Abrir Studio
+
+# ===== Desarrollo =====
+pnpm dev                     # Web (Next.js)
+pnpm mobile                  # Móvil (Expo)
+npx expo run:ios --device    # Build nativo iOS (para HealthKit)
+
+# ===== Verificación =====
+pnpm lint                    # Lint todo
+pnpm type-check              # TypeScript check
+docker ps                    # Ver contenedores corriendo
+```
+
+---
+
+## 📊 Resumen de URLs y Puertos
+
+| Servicio | Puerto | URL |
+|----------|--------|-----|
+| Supabase API | 54321 | http://127.0.0.1:54321 |
+| Supabase Studio | 54323 | http://127.0.0.1:54323 |
+| Supabase DB | 54322 | postgresql://postgres:postgres@127.0.0.1:54322/postgres |
+| Web Portal | 3000 | http://localhost:3000 |
+| Expo Dev | 8081 | http://localhost:8081 |
+
+---
+
+## 📖 Documentación Adicional
+
+- **[SMARTWATCH_INTEGRATION.md](SMARTWATCH_INTEGRATION.md)** - Guía completa de integración con smartwatches
+- [Supabase Docs](https://supabase.com/docs)
+- [Expo Docs](https://docs.expo.dev/)
+- [Apple HealthKit](https://developer.apple.com/documentation/healthkit)
+- [React Native Health](https://github.com/agencyenterprise/react-native-health)
 
 ---
 
@@ -443,46 +566,4 @@ Este proyecto es un MVP de demostración. Todos los derechos reservados.
 
 ---
 
-## 🎯 Comandos Rápidos
-
-```bash
-# Instalar todo
-pnpm install
-
-# Supabase
-supabase start           # Iniciar local
-supabase stop            # Detener
-supabase status          # Ver estado
-supabase db reset        # Reset DB (reaplica migraciones)
-
-# Desarrollo
-pnpm dev                 # Web (Next.js)
-pnpm mobile              # Móvil (Expo)
-
-# Build
-pnpm build               # Build web para producción
-
-# Linting y type-check
-pnpm lint                # Lint todo el monorepo
-pnpm type-check          # TypeScript check
-```
-
----
-
-## 📊 Variables de Entorno (Resumen)
-
-| Variable | Ubicación | Descripción |
-|----------|-----------|-------------|
-| `EXPO_PUBLIC_SUPABASE_URL` | `apps/mobile/.env` | URL de Supabase (local o producción) |
-| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | `apps/mobile/.env` | Anon key de Supabase |
-| `NEXT_PUBLIC_SUPABASE_URL` | `apps/web/.env` | URL de Supabase (local o producción) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `apps/web/.env` | Anon key de Supabase |
-
-Para Edge Functions (solo si ejecutas manualmente):
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `SUPABASE_ANON_KEY`
-
----
-
-**¡Éxito con ACV-Guard! 🚑📱**
+**🎉 Alert-IO - Monitoreo proactivo que puede salvar vidas ⌚🚨❤️**

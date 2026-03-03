@@ -1,4 +1,4 @@
--- Initial schema for ACV-Guard MVP
+-- Initial schema for Alert-IO MVP
 -- Create enums first
 
 CREATE TYPE role AS ENUM ('patient', 'caregiver', 'clinician', 'admin');

@@ -97,7 +97,7 @@ export default function DashboardPage() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>Portal ACV-Guard</h1>
+          <h1 className={styles.title}>Portal Alert-IO</h1>
           <p className={styles.subtitle}>Hola, {profile?.full_name}</p>
         </div>
         <button onClick={handleLogout} className={styles.logoutButton}>

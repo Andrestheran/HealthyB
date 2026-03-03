@@ -1,5 +1,5 @@
 # Supabase local development config
-project_id = "acv-guard-local"
+project_id = "alert-io-local"
 
 [api]
 enabled = true

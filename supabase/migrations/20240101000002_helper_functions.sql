@@ -1,4 +1,4 @@
--- Helper functions for ACV-Guard
+-- Helper functions for Alert-IO
 
 -- Function to update alert status (secured)
 CREATE OR REPLACE FUNCTION update_alert_status_rpc(

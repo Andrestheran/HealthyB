@@ -198,7 +198,7 @@ serve(async (req) => {
       pushMessages.push({
         to: device.expo_push_token,
         sound: 'default',
-        title: '🚨 Alerta ACV-Guard',
+        title: '🚨 Alerta Alert-IO',
         body: `Nueva alerta ${severity.toUpperCase()} - ${source}`,
         data: {
           alert_id: alert.id,

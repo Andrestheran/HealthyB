@@ -15,7 +15,7 @@ import { supabase } from '../../lib/supabase';
 import { healthManager } from '../../lib/healthKit';
 import { fallDetectionService } from '../../lib/fallDetection';
 import Constants from 'expo-constants';
-import { VitalSignType, SmartwatchType } from '@acv-guard/shared';
+import { VitalSignType, SmartwatchType } from '@alert-io/shared';
 
 export function VitalsMonitorScreen() {
   const { user } = useAuth();
@@ -148,9 +148,47 @@ export function VitalsMonitorScreen() {
     mutationFn: async () => {
       if (!user) throw new Error('No user');
 
+      // Check if HealthKit is available or show demo option
+      if (!isHealthKitReady) {
+        // Offer demo mode
+        return new Promise((resolve, reject) => {
+          Alert.alert(
+            'HealthKit No Disponible',
+            'HealthKit solo funciona en dispositivos iOS físicos.\n\n¿Quieres crear un smartwatch de demostración para probar la interfaz?',
+            [
+              { text: 'Cancelar', style: 'cancel', onPress: () => reject(new Error('cancelled')) },
+              {
+                text: 'Crear Demo',
+                onPress: async () => {
+                  try {
+                    const { error } = await supabase.from('smartwatch_devices').insert({
+                      patient_id: user.id,
+                      device_type: SmartwatchType.APPLE_WATCH,
+                      device_name: 'Apple Watch Demo',
+                      device_model: 'Series 9 (Demo)',
+                      last_sync: new Date().toISOString(),
+                    });
+                    if (error) throw error;
+                    resolve(true);
+                  } catch (err) {
+                    reject(err);
+                  }
+                },
+              },
+            ]
+          );
+        });
+      }
+
       const watchInfo = await healthManager.getConnectedWatchInfo();
       if (!watchInfo) {
-        throw new Error('No se detectó ningún smartwatch');
+        throw new Error(
+          'No se detectó ningún smartwatch.\n\n' +
+          'Asegúrate de:\n' +
+          '• Tener un Apple Watch emparejado\n' +
+          '• Ejecutar en un dispositivo físico (no simulador)\n' +
+          '• Haber dado permisos de HealthKit'
+        );
       }
 
       const { error } = await supabase.from('smartwatch_devices').insert({
@@ -168,7 +206,9 @@ export function VitalsMonitorScreen() {
       Alert.alert('Éxito', 'Smartwatch vinculado correctamente');
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.message || 'Error al vincular smartwatch');
+      if (error.message !== 'cancelled') {
+        Alert.alert('Error al Vincular', error.message || 'Error al vincular smartwatch');
+      }
     },
   });
 

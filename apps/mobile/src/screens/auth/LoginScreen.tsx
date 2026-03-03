@@ -40,7 +40,7 @@ export function LoginScreen({ navigation }: any) {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>ACV-Guard</Text>
+        <Text style={styles.title}>Alert-IO</Text>
         <Text style={styles.subtitle}>Monitoreo de riesgo de ACV</Text>
 
         <TextInput

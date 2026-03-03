@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'ACV-Guard Portal',
+  title: 'Alert-IO Portal',
   description: 'Portal de alertas para cuidadores y clínicos',
 };
 

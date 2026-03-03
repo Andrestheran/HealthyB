@@ -1,8 +1,8 @@
 {
-  "name": "acv-guard",
+  "name": "alert-io",
   "version": "1.0.0",
   "private": true,
-  "description": "ACV-Guard stroke risk monitoring MVP",
+  "description": "Alert-IO stroke risk monitoring MVP",
   "scripts": {
     "dev": "pnpm --filter web dev",
     "mobile": "pnpm --filter mobile start",

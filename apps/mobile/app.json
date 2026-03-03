@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "ACV-Guard",
-    "slug": "acv-guard",
+    "name": "Alert-IO",
+    "slug": "alert-io",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,15 +11,17 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.acvguard.app",
+      "bundleIdentifier": "com.alertio.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "ACV-Guard necesita tu ubicación para compartirla en caso de emergencia.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "ACV-Guard puede compartir tu ubicación en segundo plano para emergencias.",
-        "NSHealthShareUsageDescription": "ACV-Guard necesita acceso a tus datos de salud para monitorear signos vitales y detectar anomalías.",
-        "NSHealthUpdateUsageDescription": "ACV-Guard necesita actualizar tus datos de salud para registrar eventos."
+        "NSLocationWhenInUseUsageDescription": "Alert-IO necesita tu ubicación para compartirla en caso de emergencia.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Alert-IO puede compartir tu ubicación en segundo plano para emergencias.",
+        "NSHealthShareUsageDescription": "Alert-IO necesita acceso a tus datos de salud para monitorear signos vitales y detectar anomalías.",
+        "NSHealthUpdateUsageDescription": "Alert-IO necesita actualizar tus datos de salud para registrar eventos."
       },
       "entitlements": {
         "com.apple.developer.healthkit": true,
@@ -31,7 +33,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.acvguard.app",
+      "package": "com.alertio.app",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
@@ -52,11 +54,13 @@
           "icon": "./assets/notification-icon.png",
           "color": "#ffffff"
         }
-      ]
+      ],
+      "expo-secure-store",
+      "@react-native-community/datetimepicker"
     ],
     "extra": {
       "eas": {
-        "projectId": "acv-guard-local"
+        "projectId": "alert-io-local"
       }
     }
   }

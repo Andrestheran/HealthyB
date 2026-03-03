@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { Profile, Role } from '@acv-guard/shared';
+import { Profile, Role } from '@alert-io/shared';
 
 interface AuthContextType {
   session: Session | null;

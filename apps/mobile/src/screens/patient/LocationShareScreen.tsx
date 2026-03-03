@@ -44,42 +44,94 @@ export function LocationShareScreen() {
 
     setLoading(true);
     try {
+      // Request location permission
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permiso Denegado', 'Necesitamos acceso a tu ubicación');
+        Alert.alert(
+          'Permiso Denegado',
+          'Por favor habilita el acceso a ubicación en los ajustes de tu dispositivo'
+        );
+        setLoading(false);
         return;
       }
 
-      const loc = await Location.getCurrentPositionAsync({});
+      // Get current location with timeout
+      const loc = await Promise.race([
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Tiempo de espera agotado al obtener ubicación')), 15000)
+        ),
+      ]) as Location.LocationObject;
 
-      // Call ingest_location Edge Function
+      // Call ingest_location Edge Function with timeout
       const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
       const { data: { session } } = await supabase.auth.getSession();
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/ingest_location`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({
-          patient_id: user.id,
-          lat: loc.coords.latitude,
-          lng: loc.coords.longitude,
-          accuracy_m: loc.coords.accuracy || 0,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Error al compartir ubicación');
+      if (!session?.access_token) {
+        throw new Error('No hay sesión activa. Por favor inicia sesión nuevamente.');
       }
 
-      Alert.alert('Ubicación Compartida', 'Tu ubicación ha sido actualizada');
-      loadLastLocation();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const response = await fetch(`${supabaseUrl}/functions/v1/ingest_location`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            patient_id: user.id,
+            lat: loc.coords.latitude,
+            lng: loc.coords.longitude,
+            accuracy_m: loc.coords.accuracy || 0,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Error al compartir ubicación');
+        }
+
+        Alert.alert('✅ Ubicación Compartida',
+          `Tu ubicación ha sido actualizada correctamente.\n\n` +
+          `Lat: ${loc.coords.latitude.toFixed(6)}\n` +
+          `Lng: ${loc.coords.longitude.toFixed(6)}`
+        );
+        loadLastLocation();
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          throw new Error(
+            'Tiempo de espera agotado al conectar con el servidor.\n\n' +
+            'Verifica que:\n' +
+            '• Tengas conexión a internet\n' +
+            '• Tu computadora y celular estén en la misma red WiFi\n' +
+            '• Supabase esté corriendo en tu computadora'
+          );
+        }
+        throw fetchError;
+      }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Error al compartir ubicación');
+      console.error('Location share error:', error);
+      let errorMessage = error.message || 'Error desconocido al compartir ubicación';
+
+      // Add helpful context for common errors
+      if (errorMessage.includes('Network request failed') || errorMessage.includes('fetch')) {
+        errorMessage =
+          'No se pudo conectar con el servidor.\n\n' +
+          'Asegúrate de que:\n' +
+          '• Tu celular y computadora estén en la misma red WiFi\n' +
+          '• Supabase esté corriendo (ejecuta "supabase status")\n' +
+          '• La IP en .env sea correcta';
+      }
+
+      Alert.alert('❌ Error al Compartir', errorMessage);
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,4 @@
--- Row Level Security Policies for ACV-Guard
+-- Row Level Security Policies for Alert-IO
 
 -- Enable RLS on all tables
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;

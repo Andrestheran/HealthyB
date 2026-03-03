@@ -87,7 +87,7 @@ export function PatientHomeScreen({ navigation }: any) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.greeting}>Hola, {profile?.full_name}</Text>
-        <Text style={styles.subtitle}>ACV-Guard</Text>
+        <Text style={styles.subtitle}>Alert-IO</Text>
       </View>
 
       {/* SOS Button */}

@@ -42,7 +42,7 @@ serve(async (req) => {
     const { patient_id, lat, lng, accuracy_m } = input;
 
     // Validate input
-    if (!patient_id || lat === undefined || lng === undefined || !accuracy_m) {
+    if (!patient_id || lat === undefined || lng === undefined || accuracy_m === undefined) {
       throw new Error('Missing required fields');
     }
 

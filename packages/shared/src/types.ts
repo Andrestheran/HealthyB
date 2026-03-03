@@ -224,3 +224,23 @@ export interface PatientVitalsSnapshot {
   steps: VitalSign | null;
   sleep_hours: VitalSign | null;
 }
+
+// AI Chat types
+export interface AIChatSession {
+  id: string;
+  patient_id: string;
+  started_at: string;
+  last_message_at: string;
+  message_count: number;
+  archived: boolean;
+}
+
+export interface AIChatMessage {
+  id: string;
+  session_id: string;
+  patient_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  metadata: Record<string, any>;
+  created_at: string;
+}

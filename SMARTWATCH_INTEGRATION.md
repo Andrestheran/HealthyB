@@ -1,6 +1,6 @@
-# 🎗️ Integración con Smartwatches - ACV-Guard
+# 🎗️ Integración con Smartwatches - Alert-IO
 
-Esta guía documenta la integración completa con smartwatches (Apple Watch + Wear OS) añadida al MVP de ACV-Guard.
+Esta guía documenta la integración completa con smartwatches (Apple Watch + Wear OS) añadida al MVP de Alert-IO.
 
 ---
 
@@ -93,8 +93,8 @@ health_anomalies (
 **Permisos requeridos** (en `app.json`):
 ```json
 "infoPlist": {
-  "NSHealthShareUsageDescription": "ACV-Guard necesita acceso a tus datos de salud...",
-  "NSHealthUpdateUsageDescription": "ACV-Guard necesita actualizar tus datos de salud..."
+  "NSHealthShareUsageDescription": "Alert-IO necesita acceso a tus datos de salud...",
+  "NSHealthUpdateUsageDescription": "Alert-IO necesita actualizar tus datos de salud..."
 },
 "entitlements": {
   "com.apple.developer.healthkit": true
@@ -302,9 +302,9 @@ cd ..
 1. Agregar en `Info.plist`:
 ```xml
 <key>NSHealthShareUsageDescription</key>
-<string>ACV-Guard necesita acceso a tus datos de salud...</string>
+<string>Alert-IO necesita acceso a tus datos de salud...</string>
 <key>NSHealthUpdateUsageDescription</key>
-<string>ACV-Guard necesita actualizar tus datos de salud...</string>
+<string>Alert-IO necesita actualizar tus datos de salud...</string>
 ```
 
 2. Agregar capability en Xcode:
@@ -353,7 +353,7 @@ npx expo run:ios --device
 ### Datos de Salud
 
 - **HealthKit** es propiedad del usuario y está encriptado end-to-end por Apple
-- ACV-Guard **solo lee** datos, no escribe
+- Alert-IO **solo lee** datos, no escribe
 - Datos se sincronizan **bajo demanda** (no automáticamente en background por defecto)
 - Usuario controla permisos granulares en Configuración iOS
 
@@ -468,4 +468,4 @@ ORDER BY sw.last_sync DESC;
 
 ---
 
-**🎗️ Esta integración convierte ACV-Guard en una herramienta proactiva de monitoreo que puede salvar vidas.**
+**🎗️ Esta integración convierte Alert-IO en una herramienta proactiva de monitoreo que puede salvar vidas.**

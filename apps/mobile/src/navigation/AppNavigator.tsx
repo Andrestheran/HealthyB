@@ -2,8 +2,9 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
-import { Role } from '@acv-guard/shared';
+import { Role } from '@alert-io/shared';
 
 // Auth screens
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -16,6 +17,7 @@ import { BeFastCheckScreen } from '../screens/patient/BeFastCheckScreen';
 import { EventTimelineScreen } from '../screens/patient/EventTimelineScreen';
 import { LocationShareScreen } from '../screens/patient/LocationShareScreen';
 import { VitalsMonitorScreen } from '../screens/patient/VitalsMonitorScreen';
+import { AIChatScreen } from '../screens/patient/AIChatScreen';
 
 // Caregiver/Clinician screens
 import { AlertsInboxScreen } from '../screens/alerts/AlertsInboxScreen';
@@ -29,21 +31,106 @@ const Tab = createBottomTabNavigator();
 
 function PatientTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Home" component={PatientHomeScreen} options={{ title: 'Inicio' }} />
-      <Tab.Screen name="Vitals" component={VitalsMonitorScreen} options={{ title: 'Signos' }} />
-      <Tab.Screen name="Timeline" component={EventTimelineScreen} options={{ title: 'Historial' }} />
-      <Tab.Screen name="Location" component={LocationShareScreen} options={{ title: 'Ubicación' }} />
-      <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: 'Ajustes' }} />
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#e74c3c',
+        tabBarInactiveTintColor: '#999',
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={PatientHomeScreen}
+        options={{
+          title: 'Inicio',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Vitals"
+        component={VitalsMonitorScreen}
+        options={{
+          title: 'Signos',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="heart" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Timeline"
+        component={EventTimelineScreen}
+        options={{
+          title: 'Historial',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="time" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Location"
+        component={LocationShareScreen}
+        options={{
+          title: 'Ubicación',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="location" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="AIChat"
+        component={AIChatScreen}
+        options={{
+          title: 'Asistente',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbox-ellipses" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          title: 'Ajustes',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings" size={size} color={color} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }
 
 function CaregiverClinicianTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Alerts" component={AlertsInboxScreen} options={{ title: 'Alertas' }} />
-      <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: 'Ajustes' }} />
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#e74c3c',
+        tabBarInactiveTintColor: '#999',
+      }}
+    >
+      <Tab.Screen
+        name="Alerts"
+        component={AlertsInboxScreen}
+        options={{
+          title: 'Alertas',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="notifications" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          title: 'Ajustes',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings" size={size} color={color} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }

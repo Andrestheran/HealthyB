@@ -12,7 +12,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
-import { Role } from '@acv-guard/shared';
+import { Role } from '@alert-io/shared';
 
 export function SignupScreen({ navigation }: any) {
   const { signUp } = useAuth();

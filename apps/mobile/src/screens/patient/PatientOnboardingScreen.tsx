@@ -8,10 +8,12 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { Sex } from '@acv-guard/shared';
+import { Sex } from '@alert-io/shared';
 
 export function PatientOnboardingScreen({ navigation }: any) {
   const { user, profile } = useAuth();
@@ -19,7 +21,8 @@ export function PatientOnboardingScreen({ navigation }: any) {
   const [loading, setLoading] = useState(false);
 
   // Step 1: Patient profile
-  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [sex, setSex] = useState<Sex>(Sex.FEMALE);
   const [address, setAddress] = useState('');
   const [eps, setEps] = useState('');
@@ -34,36 +37,66 @@ export function PatientOnboardingScreen({ navigation }: any) {
   const [dyslipidemia, setDyslipidemia] = useState(false);
   const [notes, setNotes] = useState('');
 
+  // Step 3: Emergency contacts
+  const [emergencyName, setEmergencyName] = useState('');
+  const [emergencyPhone, setEmergencyPhone] = useState('');
+  const [emergencyRelationship, setEmergencyRelationship] = useState('familiar');
+
   async function handleComplete() {
     if (!user) return;
 
+    // Validar que se haya llenado el contacto de emergencia
+    if (!emergencyName || !emergencyPhone) {
+      Alert.alert('Error', 'Por favor completa todos los campos del contacto de emergencia');
+      return;
+    }
+
     setLoading(true);
     try {
-      // Insert patient data
-      const { error: patientError } = await supabase.from('patients').insert({
-        id: user.id,
-        date_of_birth: dateOfBirth,
-        sex,
-        address,
-        eps,
-        preferred_hospital: preferredHospital,
-      });
+      // Format date as YYYY-MM-DD
+      const formattedDate = dateOfBirth.toISOString().split('T')[0];
+
+      // Upsert patient data (insert or update if exists)
+      const { error: patientError } = await supabase
+        .from('patients')
+        .upsert({
+          id: user.id,
+          date_of_birth: formattedDate,
+          sex,
+          address,
+          eps,
+          preferred_hospital: preferredHospital,
+        }, { onConflict: 'id' });
 
       if (patientError) throw patientError;
 
-      // Insert risk factors
-      const { error: riskError } = await supabase.from('patient_risk_factors').insert({
-        patient_id: user.id,
-        has_htn: hasHtn,
-        has_diabetes: hasDiabetes,
-        has_afib: hasAfib,
-        has_prior_stroke: hasPriorStroke,
-        smoker,
-        dyslipidemia,
-        notes,
-      });
+      // Upsert risk factors
+      const { error: riskError } = await supabase
+        .from('patient_risk_factors')
+        .upsert({
+          patient_id: user.id,
+          has_htn: hasHtn,
+          has_diabetes: hasDiabetes,
+          has_afib: hasAfib,
+          has_prior_stroke: hasPriorStroke,
+          smoker,
+          dyslipidemia,
+          notes,
+        }, { onConflict: 'patient_id' });
 
       if (riskError) throw riskError;
+
+      // Insert emergency contact
+      const { error: emergencyError } = await supabase
+        .from('emergency_contacts')
+        .insert({
+          patient_id: user.id,
+          full_name: emergencyName,
+          phone: emergencyPhone,
+          relationship: emergencyRelationship,
+        });
+
+      if (emergencyError) throw emergencyError;
 
       Alert.alert('Éxito', 'Perfil completado exitosamente');
       navigation.replace('PatientTabs');
@@ -79,12 +112,41 @@ export function PatientOnboardingScreen({ navigation }: any) {
       <>
         <Text style={styles.stepTitle}>Información Personal</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Fecha de nacimiento (AAAA-MM-DD)"
-          value={dateOfBirth}
-          onChangeText={setDateOfBirth}
-        />
+        <View>
+          <Text style={styles.label}>Fecha de nacimiento:</Text>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Text style={styles.dateButtonText}>
+              {dateOfBirth.toLocaleDateString('es-CO', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </Text>
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              value={dateOfBirth}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, selectedDate) => {
+                // On Android, dismiss picker immediately
+                // On iOS, only dismiss when a date is selected
+                if (Platform.OS === 'android') {
+                  setShowDatePicker(false);
+                }
+                if (selectedDate) {
+                  setDateOfBirth(selectedDate);
+                  // Close picker after selection on iOS too
+                  setShowDatePicker(false);
+                }
+              }}
+              maximumDate={new Date()}
+            />
+          )}
+        </View>
 
         <View style={styles.sexContainer}>
           <Text style={styles.label}>Sexo:</Text>
@@ -169,6 +231,66 @@ export function PatientOnboardingScreen({ navigation }: any) {
           numberOfLines={4}
         />
 
+        <TouchableOpacity style={styles.button} onPress={() => setStep(3)}>
+          <Text style={styles.buttonText}>Siguiente</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
+          <Text style={styles.backButtonText}>Atrás</Text>
+        </TouchableOpacity>
+      </>
+    );
+  }
+
+  function renderStep3() {
+    return (
+      <>
+        <Text style={styles.stepTitle}>Contacto de Emergencia</Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Nombre completo"
+          value={emergencyName}
+          onChangeText={setEmergencyName}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Teléfono (ej: +573001234567)"
+          value={emergencyPhone}
+          onChangeText={setEmergencyPhone}
+          keyboardType="phone-pad"
+        />
+
+        <View style={styles.sexContainer}>
+          <Text style={styles.label}>Relación:</Text>
+          <View style={styles.sexButtons}>
+            {[
+              { value: 'familiar', label: 'Familiar' },
+              { value: 'amigo', label: 'Amigo' },
+              { value: 'cuidador', label: 'Cuidador' },
+            ].map((rel) => (
+              <TouchableOpacity
+                key={rel.value}
+                style={[
+                  styles.sexButton,
+                  emergencyRelationship === rel.value && styles.sexButtonActive,
+                ]}
+                onPress={() => setEmergencyRelationship(rel.value)}
+              >
+                <Text
+                  style={[
+                    styles.sexButtonText,
+                    emergencyRelationship === rel.value && styles.sexButtonTextActive,
+                  ]}
+                >
+                  {rel.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
           onPress={handleComplete}
@@ -181,7 +303,7 @@ export function PatientOnboardingScreen({ navigation }: any) {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
+        <TouchableOpacity style={styles.backButton} onPress={() => setStep(2)}>
           <Text style={styles.backButtonText}>Atrás</Text>
         </TouchableOpacity>
       </>
@@ -191,9 +313,9 @@ export function PatientOnboardingScreen({ navigation }: any) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Configurar Perfil</Text>
-      <Text style={styles.subtitle}>Paso {step} de 2</Text>
+      <Text style={styles.subtitle}>Paso {step} de 3</Text>
 
-      {step === 1 ? renderStep1() : renderStep2()}
+      {step === 1 ? renderStep1() : step === 2 ? renderStep2() : renderStep3()}
     </ScrollView>
   );
 }
@@ -320,5 +442,17 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: '#3498db',
     fontSize: 16,
+  },
+  dateButton: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 15,
+    backgroundColor: '#f8f8f8',
+  },
+  dateButtonText: {
+    fontSize: 16,
+    color: '#333',
   },
 });
