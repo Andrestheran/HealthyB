@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Switch,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import * as Location from 'expo-location';
 import { supabase } from '../../lib/supabase';
@@ -188,7 +189,7 @@ export function LocationShareScreen() {
             <ActivityIndicator color="#fff" />
           ) : (
             <>
-              <Text style={styles.shareButtonIcon}>📍</Text>
+              <Ionicons name="location" size={24} color="#fff" style={styles.shareButtonIcon} />
               <Text style={styles.shareButtonText}>Compartir Ubicación Ahora</Text>
             </>
           )}
@@ -222,7 +223,7 @@ export function LocationShareScreen() {
         </View>
 
         <View style={styles.infoBox}>
-          <Text style={styles.infoIcon}>ℹ️</Text>
+          <Ionicons name="information-circle" size={24} color="#0EA5E9" style={{ marginRight: 12 }} />
           <Text style={styles.infoText}>
             Tu ubicación solo se comparte con personas que hayas autorizado y se usa exclusivamente para
             emergencias médicas.
@@ -236,7 +237,7 @@ export function LocationShareScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     paddingTop: 60,
@@ -244,73 +245,98 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#F1F5F9',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.5,
   },
   content: {
     padding: 20,
   },
   description: {
     fontSize: 16,
-    color: '#666',
+    color: '#64748B',
     marginBottom: 30,
     lineHeight: 24,
+    fontWeight: '500',
   },
   shareButton: {
-    backgroundColor: '#3498db',
+    backgroundColor: '#0EA5E9',
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
+    elevation: 4,
+    shadowColor: '#0EA5E9',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   shareButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#94A3B8',
+    shadowOpacity: 0,
   },
   shareButtonIcon: {
-    fontSize: 24,
     marginRight: 10,
   },
   shareButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
   lastLocationCard: {
     backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
     marginBottom: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   lastLocationTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 8,
+    letterSpacing: 0.3,
   },
   lastLocationText: {
     fontSize: 12,
-    color: '#666',
-    marginBottom: 5,
+    color: '#64748B',
+    marginBottom: 6,
     fontFamily: 'monospace',
+    fontWeight: '500',
   },
   lastLocationDate: {
     fontSize: 12,
-    color: '#999',
+    color: '#94A3B8',
+    fontWeight: '500',
   },
   backgroundSection: {
     backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   backgroundInfo: {
     flex: 1,
@@ -319,29 +345,30 @@ const styles = StyleSheet.create({
   backgroundTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
+    color: '#0F172A',
+    marginBottom: 6,
+    letterSpacing: -0.2,
   },
   backgroundDescription: {
     fontSize: 12,
-    color: '#666',
+    color: '#64748B',
     lineHeight: 18,
+    fontWeight: '500',
   },
   infoBox: {
-    backgroundColor: '#e8f4f8',
-    padding: 15,
-    borderRadius: 12,
+    backgroundColor: '#E0F2FE',
+    padding: 16,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'flex-start',
-  },
-  infoIcon: {
-    fontSize: 20,
-    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
   },
   infoText: {
     flex: 1,
     fontSize: 14,
-    color: '#2980b9',
+    color: '#0369A1',
     lineHeight: 20,
+    fontWeight: '500',
   },
 });

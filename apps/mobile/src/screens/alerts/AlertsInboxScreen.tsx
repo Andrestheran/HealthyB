@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
@@ -95,7 +96,8 @@ export function AlertsInboxScreen({ navigation }: any) {
 
               {alert.location_lat && alert.location_lng && (
                 <View style={styles.locationBadge}>
-                  <Text style={styles.locationText}>📍 Ubicación disponible</Text>
+                  <Ionicons name="location" size={14} color="#10B981" />
+                  <Text style={styles.locationText}>Ubicación disponible</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -109,12 +111,13 @@ export function AlertsInboxScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F8FAFC',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     paddingTop: 60,
@@ -122,12 +125,13 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#F1F5F9',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.5,
   },
   content: {
     flex: 1,
@@ -136,67 +140,84 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: 'center',
     fontSize: 16,
-    color: '#666',
+    color: '#64748B',
     marginTop: 40,
+    fontWeight: '500',
   },
   alertCard: {
     backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15,
+    padding: 18,
+    borderRadius: 16,
+    marginBottom: 14,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   alertHeader: {
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 12,
     gap: 10,
   },
   severityBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   severityText: {
     color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    backgroundColor: '#ecf0f1',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
   },
   statusText: {
-    color: '#333',
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#0F172A',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   patientName: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
+    color: '#0F172A',
+    marginBottom: 6,
+    letterSpacing: -0.3,
   },
   alertType: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 3,
+    color: '#64748B',
+    marginBottom: 4,
+    fontWeight: '500',
   },
   alertDate: {
     fontSize: 12,
-    color: '#999',
+    color: '#94A3B8',
+    fontWeight: '500',
   },
   locationBadge: {
-    marginTop: 10,
-    paddingVertical: 5,
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D1FAE5',
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
   },
   locationText: {
     fontSize: 12,
-    color: '#3498db',
+    color: '#10B981',
+    fontWeight: '600',
+    marginLeft: 6,
+    letterSpacing: 0.3,
   },
 });

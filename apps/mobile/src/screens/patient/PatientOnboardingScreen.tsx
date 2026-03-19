@@ -16,7 +16,7 @@ import { supabase } from '../../lib/supabase';
 import { Sex } from '@alert-io/shared';
 
 export function PatientOnboardingScreen({ navigation }: any) {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -97,6 +97,9 @@ export function PatientOnboardingScreen({ navigation }: any) {
         });
 
       if (emergencyError) throw emergencyError;
+
+      // Refresh profile to update hasCompletedOnboarding
+      await refreshProfile();
 
       Alert.alert('Éxito', 'Perfil completado exitosamente');
       navigation.replace('PatientTabs');
@@ -323,46 +326,59 @@ export function PatientOnboardingScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
   },
   content: {
     padding: 20,
     paddingTop: 60,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '700',
     marginBottom: 10,
-    color: '#333',
+    color: '#0F172A',
+    letterSpacing: -0.8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 30,
+    color: '#64748B',
+    marginBottom: 32,
+    fontWeight: '500',
   },
   stepTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 20,
-    color: '#333',
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 24,
+    color: '#0F172A',
+    letterSpacing: -0.5,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 14,
     fontSize: 16,
+    backgroundColor: '#fff',
+    color: '#0F172A',
+    fontWeight: '500',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   textarea: {
     height: 100,
     textAlignVertical: 'top',
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: 10,
-    color: '#333',
+    marginBottom: 12,
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   sexContainer: {
     marginBottom: 20,
@@ -373,86 +389,116 @@ const styles = StyleSheet.create({
   },
   sexButton: {
     flex: 1,
-    padding: 12,
+    padding: 14,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
     alignItems: 'center',
+    backgroundColor: '#fff',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   sexButtonActive: {
-    backgroundColor: '#e74c3c',
-    borderColor: '#e74c3c',
+    backgroundColor: '#DC2626',
+    borderColor: '#DC2626',
+    elevation: 3,
+    shadowColor: '#DC2626',
+    shadowOpacity: 0.3,
   },
   sexButtonText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '600',
   },
   sexButtonTextActive: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
+    backgroundColor: '#fff',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   checkbox: {
     width: 24,
     height: 24,
     borderWidth: 2,
-    borderColor: '#ddd',
-    borderRadius: 4,
-    marginRight: 12,
+    borderColor: '#E2E8F0',
+    borderRadius: 6,
+    marginRight: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxActive: {
-    backgroundColor: '#e74c3c',
-    borderColor: '#e74c3c',
+    backgroundColor: '#DC2626',
+    borderColor: '#DC2626',
   },
   checkboxCheck: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   checkboxLabel: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    color: '#0F172A',
+    fontWeight: '500',
   },
   button: {
-    backgroundColor: '#e74c3c',
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: '#DC2626',
+    padding: 18,
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 24,
+    elevation: 4,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   buttonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#94A3B8',
+    shadowOpacity: 0,
   },
   buttonText: {
     color: '#fff',
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  backButton: {
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  backButtonText: {
+    color: '#0EA5E9',
     fontSize: 16,
     fontWeight: '600',
   },
-  backButton: {
-    padding: 15,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  backButtonText: {
-    color: '#3498db',
-    fontSize: 16,
-  },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
-    backgroundColor: '#f8f8f8',
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 14,
+    backgroundColor: '#fff',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   dateButtonText: {
     fontSize: 16,
-    color: '#333',
+    color: '#0F172A',
+    fontWeight: '500',
   },
 });

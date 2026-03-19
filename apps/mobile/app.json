@@ -21,7 +21,18 @@
         "NSLocationWhenInUseUsageDescription": "Alert-IO necesita tu ubicación para compartirla en caso de emergencia.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Alert-IO puede compartir tu ubicación en segundo plano para emergencias.",
         "NSHealthShareUsageDescription": "Alert-IO necesita acceso a tus datos de salud para monitorear signos vitales y detectar anomalías.",
-        "NSHealthUpdateUsageDescription": "Alert-IO necesita actualizar tus datos de salud para registrar eventos."
+        "NSHealthUpdateUsageDescription": "Alert-IO necesita actualizar tus datos de salud para registrar eventos.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSExceptionDomains": {
+            "localhost": {
+              "NSExceptionAllowsInsecureHTTPLoads": true
+            },
+            "192.168.40.21": {
+              "NSExceptionAllowsInsecureHTTPLoads": true
+            }
+          }
+        }
       },
       "entitlements": {
         "com.apple.developer.healthkit": true,

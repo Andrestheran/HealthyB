@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
@@ -26,17 +27,17 @@ export function EventTimelineScreen() {
   function getEventIcon(type: string) {
     switch (type) {
       case 'sos':
-        return '🚨';
+        return { name: 'alert-circle' as const, color: '#DC2626', bg: '#FEE2E2' };
       case 'checkin':
-        return '🩺';
+        return { name: 'fitness' as const, color: '#8B5CF6', bg: '#F3E8FF' };
       case 'symptom_report':
-        return '⚠️';
+        return { name: 'warning' as const, color: '#F59E0B', bg: '#FEF3C7' };
       case 'location_ping':
-        return '📍';
+        return { name: 'location' as const, color: '#10B981', bg: '#D1FAE5' };
       case 'alert_status_change':
-        return '🔔';
+        return { name: 'notifications' as const, color: '#0EA5E9', bg: '#E0F2FE' };
       default:
-        return '📋';
+        return { name: 'document-text' as const, color: '#6366F1', bg: '#E0E7FF' };
     }
   }
 
@@ -75,24 +76,29 @@ export function EventTimelineScreen() {
         {events?.length === 0 ? (
           <Text style={styles.emptyText}>No hay eventos registrados</Text>
         ) : (
-          events?.map((event) => (
-            <View key={event.id} style={styles.eventCard}>
-              <View style={styles.eventHeader}>
-                <Text style={styles.eventIcon}>{getEventIcon(event.type)}</Text>
-                <View style={styles.eventInfo}>
-                  <Text style={styles.eventTitle}>{getEventTitle(event.type)}</Text>
-                  <Text style={styles.eventDate}>
-                    {new Date(event.created_at).toLocaleString('es-CO')}
-                  </Text>
+          events?.map((event) => {
+            const iconData = getEventIcon(event.type);
+            return (
+              <View key={event.id} style={styles.eventCard}>
+                <View style={styles.eventHeader}>
+                  <View style={[styles.eventIconContainer, { backgroundColor: iconData.bg }]}>
+                    <Ionicons name={iconData.name} size={24} color={iconData.color} />
+                  </View>
+                  <View style={styles.eventInfo}>
+                    <Text style={styles.eventTitle}>{getEventTitle(event.type)}</Text>
+                    <Text style={styles.eventDate}>
+                      {new Date(event.created_at).toLocaleString('es-CO')}
+                    </Text>
+                  </View>
                 </View>
+                {event.payload && Object.keys(event.payload).length > 0 && (
+                  <Text style={styles.eventPayload}>
+                    {JSON.stringify(event.payload, null, 2)}
+                  </Text>
+                )}
               </View>
-              {event.payload && Object.keys(event.payload).length > 0 && (
-                <Text style={styles.eventPayload}>
-                  {JSON.stringify(event.payload, null, 2)}
-                </Text>
-              )}
-            </View>
-          ))
+            );
+          })
         )}
       </ScrollView>
     </View>
@@ -102,12 +108,13 @@ export function EventTimelineScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F8FAFC',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     paddingTop: 60,
@@ -115,12 +122,13 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#F1F5F9',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.5,
   },
   content: {
     flex: 1,
@@ -129,27 +137,34 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: 'center',
     fontSize: 16,
-    color: '#666',
+    color: '#94A3B8',
     marginTop: 40,
+    fontWeight: '500',
   },
   eventCard: {
     backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15,
+    padding: 18,
+    borderRadius: 16,
+    marginBottom: 12,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   eventHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  eventIcon: {
-    fontSize: 32,
-    marginRight: 15,
+  eventIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
   },
   eventInfo: {
     flex: 1,
@@ -157,17 +172,22 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
+    color: '#0F172A',
+    marginBottom: 4,
+    letterSpacing: -0.2,
   },
   eventDate: {
     fontSize: 12,
-    color: '#666',
+    color: '#64748B',
+    fontWeight: '500',
   },
   eventPayload: {
-    marginTop: 10,
-    fontSize: 12,
-    color: '#666',
+    marginTop: 12,
+    fontSize: 11,
+    color: '#64748B',
     fontFamily: 'monospace',
+    backgroundColor: '#F8FAFC',
+    padding: 10,
+    borderRadius: 8,
   },
 });

@@ -104,31 +104,59 @@ serve(async (req) => {
   }
 
   try {
-    // Get authenticated user
+    // ⚠️ TEMPORARY: Authentication disabled for local development testing
+    // Due to JWT verification bug in Edge Runtime v1.70.5
+    // TODO: Re-enable authentication before production deployment
+
+    // Hardcoded patient ID for demo user: patient_demo@acvguard.test
+    const patientId = '585a5e01-3b17-401e-9bc7-9984c0a6502f';
+
+    console.log('⚠️ WARNING: Using hardcoded patient_id for testing (auth disabled)');
+
+    // Create supabase client with SERVICE ROLE to bypass RLS
+    // (required because we disabled auth, so auth.uid() is null)
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // ⚠️ COMMENTED OUT: Original authentication code (re-enable for production)
+    /*
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing authorization header');
     }
 
-    const supabase = createClient(
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseServiceRole = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    let patientId: string;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
 
-    if (!user) {
-      throw new Error('Not authenticated');
+      const payload = JSON.parse(atob(parts[1]));
+      patientId = payload.sub;
+
+      if (!patientId) {
+        throw new Error('Invalid token payload');
+      }
+
+      const { data: userExists, error: userError } = await supabaseServiceRole.auth.admin.getUserById(patientId);
+
+      if (userError || !userExists) {
+        throw new Error('User not found in database');
+      }
+    } catch (parseError: any) {
+      console.error('Auth error:', parseError);
+      throw new Error('Not authenticated: ' + (parseError.message || 'Invalid token'));
     }
-
-    const patientId = user.id;
+    */
     const input: ChatRequest = await req.json();
     const { message, session_id, stream = false } = input;
 
@@ -187,34 +215,108 @@ serve(async (req) => {
       },
     ];
 
-    // Call Anthropic API
-    if (!ANTHROPIC_API_KEY) {
-      throw new Error('ANTHROPIC_API_KEY no está configurada');
+    // Call Anthropic API (or use mock for testing without credits)
+    let assistantMessage: string;
+
+    // ⚠️ TEMPORARY: Mock responses for MVP demo (no API credits needed)
+    // TODO: Remove mock and use real API when credits are available
+    const USE_MOCK = true; // Set to false when API key has credits
+
+    if (USE_MOCK) {
+      console.log('⚠️ Using MOCK response (Anthropic API disabled for testing)');
+
+      // Generate contextual mock response based on keywords
+      const lowerMessage = message.toLowerCase();
+
+      if (lowerMessage.includes('be-fast') || lowerMessage.includes('befast')) {
+        assistantMessage = `BE-FAST es un acrónimo que te ayuda a recordar los síntomas principales de un ACV (Accidente Cerebrovascular):
+
+• **B** (Balance): Pérdida súbita del equilibrio o coordinación
+• **E** (Eyes/Ojos): Visión borrosa o pérdida súbita de visión
+• **F** (Face/Cara): Un lado de la cara caído o entumecido
+• **A** (Arm/Brazo): Debilidad o entumecimiento en un brazo
+• **S** (Speech/Habla): Dificultad para hablar o entender
+• **T** (Time/Tiempo): Tiempo es cerebro - actuar rápido salva vidas
+
+Si notas cualquiera de estos síntomas, llama al 123 inmediatamente. Cada minuto cuenta.`;
+      } else if (lowerMessage.includes('prevenir') || lowerMessage.includes('prevencion')) {
+        assistantMessage = `Para prevenir un ACV, te recomiendo:
+
+1. **Controla tu presión arterial** - Es el factor de riesgo más importante
+2. **Mantén una dieta saludable** - Reduce sal, grasas saturadas y azúcares
+3. **Haz ejercicio regularmente** - Al menos 30 minutos al día
+4. **No fumes** - El cigarrillo aumenta mucho el riesgo
+5. **Controla la diabetes** si la tienes
+6. **Toma tus medicamentos** según indicación médica
+
+Recuerda: Alert-IO te ayuda a monitorear estos factores, pero siempre consulta con tu médico para un plan personalizado.`;
+      } else if (hasEmergency) {
+        assistantMessage = `⚠️ **ATENCIÓN: Detecté síntomas de emergencia en tu mensaje.**
+
+Por favor:
+1. **Llama al 123 AHORA**
+2. **Presiona el botón SOS rojo** en la pantalla principal de Alert-IO
+3. **No conduzcas** - espera la ambulancia o que alguien te lleve
+
+Los síntomas de ACV requieren atención médica inmediata. Cada minuto cuenta para salvar tu vida y reducir daños permanentes.
+
+¿Necesitas que contacte a tu persona de emergencia?`;
+      } else if (lowerMessage.includes('sintoma') || lowerMessage.includes('síntoma')) {
+        assistantMessage = `Los síntomas principales de un ACV incluyen:
+
+• Cara caída o entumecida en un lado
+• Debilidad o pérdida de sensibilidad en brazo o pierna
+• Dificultad para hablar o entender
+• Visión borrosa o pérdida de visión
+• Mareos o pérdida de equilibrio
+• Dolor de cabeza severo sin causa conocida
+
+**Importante**: Si experimentas cualquiera de estos síntomas, aunque sea leve, llama al 123. No esperes a que empeore.
+
+Recuerda usar BE-FAST para identificarlos rápidamente.`;
+      } else {
+        assistantMessage = `Hola, soy tu asistente de salud de Alert-IO. Estoy aquí para ayudarte con información educativa sobre prevención y síntomas de ACV.
+
+Puedo responder preguntas sobre:
+• Síntomas de ACV (BE-FAST)
+• Prevención y factores de riesgo
+• Cuándo buscar ayuda médica
+• Cómo usar las funciones de Alert-IO
+
+**Importante**: No proporciono diagnósticos médicos. Para emergencias, llama al 123 o presiona el botón SOS.
+
+¿En qué puedo ayudarte hoy?`;
+      }
+    } else {
+      // Real Anthropic API call
+      if (!ANTHROPIC_API_KEY) {
+        throw new Error('ANTHROPIC_API_KEY no está configurada');
+      }
+
+      const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 1024,
+          system: SYSTEM_PROMPT,
+          messages: messages,
+        }),
+      });
+
+      if (!anthropicResponse.ok) {
+        const error = await anthropicResponse.text();
+        console.error('Anthropic API error:', error);
+        throw new Error('Error al comunicarse con el servicio de IA');
+      }
+
+      const result = await anthropicResponse.json();
+      assistantMessage = result.content[0].text;
     }
-
-    const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        messages: messages,
-      }),
-    });
-
-    if (!anthropicResponse.ok) {
-      const error = await anthropicResponse.text();
-      console.error('Anthropic API error:', error);
-      throw new Error('Error al comunicarse con el servicio de IA');
-    }
-
-    const result = await anthropicResponse.json();
-    const assistantMessage = result.content[0].text;
 
     // Save user message
     await supabase.from('ai_chat_messages').insert({

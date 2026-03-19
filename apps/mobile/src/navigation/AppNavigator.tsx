@@ -136,7 +136,7 @@ function CaregiverClinicianTabs() {
 }
 
 export function AppNavigator() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, hasCompletedOnboarding } = useAuth();
 
   if (loading) {
     return null; // Or a loading screen
@@ -151,10 +151,15 @@ export function AppNavigator() {
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
           </>
-        ) : profile.role === Role.PATIENT ? (
-          // Patient stack
+        ) : profile.role === Role.PATIENT && !hasCompletedOnboarding ? (
+          // Patient onboarding - only show if not completed
           <>
             <Stack.Screen name="PatientOnboarding" component={PatientOnboardingScreen} />
+            <Stack.Screen name="PatientTabs" component={PatientTabs} />
+          </>
+        ) : profile.role === Role.PATIENT ? (
+          // Patient stack - onboarding completed
+          <>
             <Stack.Screen name="PatientTabs" component={PatientTabs} />
             <Stack.Screen name="BeFastCheck" component={BeFastCheckScreen} />
           </>

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Linking,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import Constants from 'expo-constants';
@@ -197,7 +198,8 @@ export function AlertDetailScreen({ route, navigation }: any) {
               Actualizada: {new Date(alert.location.updated_at).toLocaleString('es-CO')}
             </Text>
             <TouchableOpacity style={styles.mapButton} onPress={handleOpenMap}>
-              <Text style={styles.mapButtonText}>📍 Abrir en Google Maps</Text>
+              <Ionicons name="location" size={18} color="#10B981" style={styles.mapButtonIcon} />
+              <Text style={styles.mapButtonText}>Abrir en Google Maps</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -244,12 +246,13 @@ export function AlertDetailScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F8FAFC',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     paddingTop: 60,
@@ -257,17 +260,19 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#F1F5F9',
   },
   backButton: {
     fontSize: 16,
-    color: '#3498db',
-    marginBottom: 10,
+    color: '#0EA5E9',
+    marginBottom: 12,
+    fontWeight: '600',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.5,
   },
   content: {
     flex: 1,
@@ -275,76 +280,104 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15,
+    padding: 18,
+    borderRadius: 16,
+    marginBottom: 14,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 10,
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 12,
+    letterSpacing: -0.3,
   },
   statusText: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
+    color: '#64748B',
+    marginBottom: 6,
+    fontWeight: '500',
   },
   infoText: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
+    color: '#64748B',
+    marginBottom: 6,
+    fontWeight: '500',
   },
   riskText: {
     fontSize: 14,
-    color: '#e74c3c',
-    marginBottom: 3,
+    color: '#DC2626',
+    marginBottom: 4,
+    fontWeight: '600',
   },
   medText: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
+    color: '#64748B',
+    marginBottom: 6,
+    fontWeight: '500',
   },
   allergyText: {
     fontSize: 14,
-    color: '#f39c12',
-    marginBottom: 3,
+    color: '#F59E0B',
+    marginBottom: 4,
+    fontWeight: '600',
   },
   contactText: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
+    color: '#64748B',
+    marginBottom: 6,
+    fontWeight: '500',
   },
   mapButton: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: '#3498db',
-    borderRadius: 8,
+    marginTop: 12,
+    padding: 14,
+    backgroundColor: '#D1FAE5',
+    borderRadius: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  mapButtonIcon: {
+    marginRight: 8,
   },
   mapButtonText: {
-    color: '#fff',
-    fontSize: 14,
+    color: '#10B981',
+    fontSize: 15,
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
   actionButton: {
-    padding: 15,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   acknowledgeButton: {
-    backgroundColor: '#27ae60',
+    backgroundColor: '#10B981',
   },
   escalateButton: {
-    backgroundColor: '#f39c12',
+    backgroundColor: '#F59E0B',
   },
   closeButton: {
-    backgroundColor: '#95a5a6',
+    backgroundColor: '#94A3B8',
   },
   actionButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
 });

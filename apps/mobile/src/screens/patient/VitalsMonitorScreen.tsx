@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
@@ -258,7 +259,9 @@ export function VitalsMonitorScreen() {
         {/* Smartwatch Status */}
         {smartwatchDevices && smartwatchDevices.length > 0 ? (
           <View style={styles.watchCard}>
-            <Text style={styles.watchIcon}>⌚</Text>
+            <View style={styles.watchIconContainer}>
+              <Ionicons name="watch" size={28} color="#0EA5E9" />
+            </View>
             <View style={styles.watchInfo}>
               <Text style={styles.watchName}>{smartwatchDevices[0].device_name}</Text>
               <Text style={styles.watchStatus}>
@@ -271,6 +274,9 @@ export function VitalsMonitorScreen() {
           </View>
         ) : (
           <View style={styles.noWatchCard}>
+            <View style={styles.noWatchIconContainer}>
+              <Ionicons name="watch-outline" size={48} color="#94A3B8" />
+            </View>
             <Text style={styles.noWatchText}>No hay smartwatch vinculado</Text>
             <TouchableOpacity
               style={styles.pairButton}
@@ -280,7 +286,10 @@ export function VitalsMonitorScreen() {
               {pairWatchMutation.isPending ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.pairButtonText}>Vincular Smartwatch</Text>
+                <>
+                  <Ionicons name="add-circle" size={20} color="#fff" style={{ marginRight: 8 }} />
+                  <Text style={styles.pairButtonText}>Vincular Smartwatch</Text>
+                </>
               )}
             </TouchableOpacity>
           </View>
@@ -296,7 +305,10 @@ export function VitalsMonitorScreen() {
             {syncVitalsMutation.isPending ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.syncButtonText}>🔄 Sincronizar Datos</Text>
+              <>
+                <Ionicons name="sync" size={20} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={styles.syncButtonText}>Sincronizar Datos</Text>
+              </>
             )}
           </TouchableOpacity>
         )}
@@ -305,7 +317,9 @@ export function VitalsMonitorScreen() {
         <View style={styles.vitalsGrid}>
           {/* Heart Rate */}
           <View style={styles.vitalCard}>
-            <Text style={styles.vitalIcon}>❤️</Text>
+            <View style={[styles.vitalIconContainer, { backgroundColor: '#FEE2E2' }]}>
+              <Ionicons name="heart" size={28} color="#DC2626" />
+            </View>
             <Text style={styles.vitalLabel}>Frecuencia Cardíaca</Text>
             <Text style={styles.vitalValue}>{getVitalValue(VitalSignType.HEART_RATE)}</Text>
             <Text style={styles.vitalTime}>{getVitalTime(VitalSignType.HEART_RATE)}</Text>
@@ -313,7 +327,9 @@ export function VitalsMonitorScreen() {
 
           {/* Blood Pressure */}
           <View style={styles.vitalCard}>
-            <Text style={styles.vitalIcon}>🩺</Text>
+            <View style={styles.vitalIconContainer}>
+              <Ionicons name="fitness" size={28} color="#8B5CF6" />
+            </View>
             <Text style={styles.vitalLabel}>Presión Arterial</Text>
             <Text style={styles.vitalValue}>
               {bloodPressure ? `${bloodPressure.systolic}/${bloodPressure.diastolic}` : 'N/A'}
@@ -330,7 +346,9 @@ export function VitalsMonitorScreen() {
 
           {/* Blood Oxygen */}
           <View style={styles.vitalCard}>
-            <Text style={styles.vitalIcon}>🫁</Text>
+            <View style={[styles.vitalIconContainer, { backgroundColor: '#E0F2FE' }]}>
+              <Ionicons name="water" size={28} color="#0EA5E9" />
+            </View>
             <Text style={styles.vitalLabel}>Oxígeno en Sangre</Text>
             <Text style={styles.vitalValue}>{getVitalValue(VitalSignType.BLOOD_OXYGEN)}</Text>
             <Text style={styles.vitalTime}>{getVitalTime(VitalSignType.BLOOD_OXYGEN)}</Text>
@@ -338,7 +356,9 @@ export function VitalsMonitorScreen() {
 
           {/* Steps */}
           <View style={styles.vitalCard}>
-            <Text style={styles.vitalIcon}>👣</Text>
+            <View style={[styles.vitalIconContainer, { backgroundColor: '#D1FAE5' }]}>
+              <Ionicons name="walk" size={28} color="#10B981" />
+            </View>
             <Text style={styles.vitalLabel}>Pasos Hoy</Text>
             <Text style={styles.vitalValue}>{getVitalValue(VitalSignType.STEPS)}</Text>
             <Text style={styles.vitalTime}>{getVitalTime(VitalSignType.STEPS)}</Text>
@@ -346,7 +366,9 @@ export function VitalsMonitorScreen() {
 
           {/* Sleep */}
           <View style={styles.vitalCard}>
-            <Text style={styles.vitalIcon}>😴</Text>
+            <View style={[styles.vitalIconContainer, { backgroundColor: '#E0E7FF' }]}>
+              <Ionicons name="moon" size={28} color="#6366F1" />
+            </View>
             <Text style={styles.vitalLabel}>Horas de Sueño</Text>
             <Text style={styles.vitalValue}>{getVitalValue(VitalSignType.SLEEP_HOURS)}</Text>
             <Text style={styles.vitalTime}>{getVitalTime(VitalSignType.SLEEP_HOURS)}</Text>
@@ -356,7 +378,9 @@ export function VitalsMonitorScreen() {
         {/* Fall Detection Toggle */}
         <View style={styles.fallDetectionCard}>
           <View style={styles.fallDetectionHeader}>
-            <Text style={styles.fallDetectionIcon}>🚨</Text>
+            <View style={styles.fallDetectionIconContainer}>
+              <Ionicons name="alert-circle" size={28} color="#DC2626" />
+            </View>
             <View style={styles.fallDetectionInfo}>
               <Text style={styles.fallDetectionTitle}>Detección de Caídas</Text>
               <Text style={styles.fallDetectionDescription}>
@@ -383,7 +407,7 @@ export function VitalsMonitorScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     paddingTop: 60,
@@ -391,12 +415,13 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#F1F5F9',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.5,
   },
   content: {
     flex: 1,
@@ -404,15 +429,27 @@ const styles = StyleSheet.create({
   },
   watchCard: {
     backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
-  watchIcon: {
-    fontSize: 32,
-    marginRight: 15,
+  watchIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#E0F2FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
   },
   watchInfo: {
     flex: 1,
@@ -420,97 +457,155 @@ const styles = StyleSheet.create({
   watchName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
+    color: '#0F172A',
+    marginBottom: 6,
+    letterSpacing: -0.2,
   },
   watchStatus: {
     fontSize: 12,
-    color: '#666',
+    color: '#64748B',
+    fontWeight: '500',
   },
   noWatchCard: {
     backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
+    padding: 24,
+    borderRadius: 16,
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  noWatchIconContainer: {
+    marginBottom: 16,
   },
   noWatchText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 15,
+    fontSize: 15,
+    color: '#64748B',
+    marginBottom: 18,
+    fontWeight: '500',
   },
   pairButton: {
-    backgroundColor: '#3498db',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    backgroundColor: '#0EA5E9',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#0EA5E9',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   pairButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
   syncButton: {
-    backgroundColor: '#27ae60',
-    padding: 15,
+    backgroundColor: '#10B981',
+    padding: 16,
     borderRadius: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 20,
+    elevation: 2,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   syncButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#94A3B8',
+    shadowOpacity: 0,
   },
   syncButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
   vitalsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 15,
+    gap: 14,
     marginBottom: 20,
   },
   vitalCard: {
     backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
     width: '47%',
     alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
-  vitalIcon: {
-    fontSize: 32,
-    marginBottom: 10,
+  vitalIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: '#F3E8FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   vitalLabel: {
     fontSize: 12,
-    color: '#666',
+    color: '#64748B',
     marginBottom: 8,
     textAlign: 'center',
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   vitalValue: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 6,
+    letterSpacing: -0.5,
   },
   vitalTime: {
     fontSize: 10,
-    color: '#999',
+    color: '#94A3B8',
+    fontWeight: '500',
   },
   fallDetectionCard: {
     backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   fallDetectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
   },
-  fallDetectionIcon: {
-    fontSize: 32,
-    marginRight: 15,
+  fallDetectionIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
   },
   fallDetectionInfo: {
     flex: 1,
@@ -518,27 +613,38 @@ const styles = StyleSheet.create({
   fallDetectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
+    color: '#0F172A',
+    marginBottom: 6,
+    letterSpacing: -0.2,
   },
   fallDetectionDescription: {
     fontSize: 12,
-    color: '#666',
+    color: '#64748B',
     lineHeight: 18,
+    fontWeight: '500',
   },
   toggleButton: {
-    backgroundColor: '#e0e0e0',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    padding: 14,
+    borderRadius: 12,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   toggleButtonActive: {
-    backgroundColor: '#e74c3c',
+    backgroundColor: '#DC2626',
+    borderColor: '#DC2626',
+    elevation: 2,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   toggleButtonText: {
-    color: '#666',
-    fontSize: 14,
+    color: '#64748B',
+    fontSize: 15,
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
   toggleButtonTextActive: {
     color: '#fff',
