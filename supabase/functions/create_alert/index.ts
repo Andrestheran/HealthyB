@@ -72,6 +72,27 @@ serve(async (req) => {
       throw new Error('Missing required fields');
     }
 
+    // Ensure patient record exists (critical for SOS emergencies)
+    const { data: existingPatient } = await supabase
+      .from('patients')
+      .select('id')
+      .eq('id', patient_id)
+      .single();
+
+    if (!existingPatient) {
+      // Auto-create minimal patient record for emergency scenarios
+      await supabase
+        .from('patients')
+        .insert({
+          id: patient_id,
+          date_of_birth: '2000-01-01', // Placeholder
+          sex: 'other',
+          address: '',
+          eps: '',
+          preferred_hospital: '',
+        });
+    }
+
     // Check if patient has AFib (for severity calculation)
     const { data: riskFactors } = await supabase
       .from('patient_risk_factors')

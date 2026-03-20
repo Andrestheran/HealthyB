@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -58,6 +58,36 @@ export function EventTimelineScreen() {
     }
   }
 
+  function getEventDescription(event: any) {
+    const payload = event.payload || {};
+
+    switch (event.type) {
+      case 'sos':
+        return 'Alerta de emergencia activada manualmente';
+      case 'checkin':
+        const symptoms = [];
+        if (payload.balance) symptoms.push('Balance');
+        if (payload.eyes) symptoms.push('Ojos');
+        if (payload.face) symptoms.push('Cara');
+        if (payload.arm) symptoms.push('Brazo');
+        if (payload.speech) symptoms.push('Habla');
+        return symptoms.length > 0
+          ? `Síntomas reportados: ${symptoms.join(', ')}`
+          : 'Revisión completada sin síntomas';
+      case 'location_ping':
+        return 'Ubicación actualizada en el sistema';
+      case 'alert_status_change':
+        return `Estado cambiado a: ${payload.new_status || 'N/A'}`;
+      default:
+        return 'Evento registrado';
+    }
+  }
+
+  function openLocation(lat: number, lng: number) {
+    const url = `https://maps.google.com/?q=${lat},${lng}`;
+    Linking.openURL(url);
+  }
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -74,10 +104,16 @@ export function EventTimelineScreen() {
 
       <ScrollView style={styles.content}>
         {events?.length === 0 ? (
-          <Text style={styles.emptyText}>No hay eventos registrados</Text>
+          <View style={styles.emptyContainer}>
+            <Ionicons name="calendar-outline" size={64} color="#CBD5E1" />
+            <Text style={styles.emptyText}>No hay eventos registrados</Text>
+            <Text style={styles.emptySubtext}>Tus actividades aparecerán aquí</Text>
+          </View>
         ) : (
           events?.map((event) => {
             const iconData = getEventIcon(event.type);
+            const hasLocation = event.payload?.lat && event.payload?.lng;
+
             return (
               <View key={event.id} style={styles.eventCard}>
                 <View style={styles.eventHeader}>
@@ -87,14 +123,39 @@ export function EventTimelineScreen() {
                   <View style={styles.eventInfo}>
                     <Text style={styles.eventTitle}>{getEventTitle(event.type)}</Text>
                     <Text style={styles.eventDate}>
-                      {new Date(event.created_at).toLocaleString('es-CO')}
+                      {new Date(event.created_at).toLocaleDateString('es-CO', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })} • {new Date(event.created_at).toLocaleTimeString('es-CO', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </Text>
                   </View>
                 </View>
-                {event.payload && Object.keys(event.payload).length > 0 && (
-                  <Text style={styles.eventPayload}>
-                    {JSON.stringify(event.payload, null, 2)}
-                  </Text>
+
+                <Text style={styles.eventDescription}>{getEventDescription(event)}</Text>
+
+                {hasLocation && (
+                  <TouchableOpacity
+                    style={styles.locationButton}
+                    onPress={() => openLocation(event.payload.lat, event.payload.lng)}
+                  >
+                    <Ionicons name="location" size={16} color="#10B981" style={{ marginRight: 6 }} />
+                    <Text style={styles.locationButtonText}>
+                      Ver ubicación en mapa
+                    </Text>
+                    <Ionicons name="open-outline" size={14} color="#10B981" style={{ marginLeft: 4 }} />
+                  </TouchableOpacity>
+                )}
+
+                {event.payload?.notes && (
+                  <View style={styles.notesContainer}>
+                    <Ionicons name="document-text" size={16} color="#64748B" />
+                    <Text style={styles.notesText}>{event.payload.notes}</Text>
+                  </View>
                 )}
               </View>
             );
@@ -134,11 +195,24 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
+  },
   emptyText: {
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 18,
+    color: '#64748B',
+    marginTop: 16,
+    fontWeight: '600',
+  },
+  emptySubtext: {
+    textAlign: 'center',
+    fontSize: 14,
     color: '#94A3B8',
-    marginTop: 40,
+    marginTop: 8,
     fontWeight: '500',
   },
   eventCard: {
@@ -181,13 +255,46 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontWeight: '500',
   },
-  eventPayload: {
+  eventDescription: {
     marginTop: 12,
-    fontSize: 11,
+    fontSize: 14,
     color: '#64748B',
-    fontFamily: 'monospace',
+    lineHeight: 20,
+    fontWeight: '500',
+  },
+  locationButton: {
+    marginTop: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D1FAE5',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  locationButtonText: {
+    fontSize: 13,
+    color: '#10B981',
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  notesContainer: {
+    marginTop: 12,
+    flexDirection: 'row',
     backgroundColor: '#F8FAFC',
-    padding: 10,
-    borderRadius: 8,
+    padding: 12,
+    borderRadius: 10,
+    gap: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#0EA5E9',
+  },
+  notesText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 18,
+    fontWeight: '500',
   },
 });

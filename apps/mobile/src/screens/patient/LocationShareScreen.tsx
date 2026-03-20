@@ -7,6 +7,7 @@ import {
   Alert,
   ActivityIndicator,
   Switch,
+  Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -41,6 +42,30 @@ export function LocationShareScreen() {
   }
 
   async function handleShareLocation() {
+    if (!user) return;
+
+    // Show options: Save to system or Share via apps
+    Alert.alert(
+      'Compartir Ubicación',
+      'Elige cómo compartir tu ubicación',
+      [
+        {
+          text: 'Guardar en el Sistema',
+          onPress: () => saveLocationToSystem(),
+        },
+        {
+          text: 'Compartir por Mensaje',
+          onPress: () => shareLocationViaApps(),
+        },
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+      ]
+    );
+  }
+
+  async function saveLocationToSystem() {
     if (!user) return;
 
     setLoading(true);
@@ -99,10 +124,27 @@ export function LocationShareScreen() {
           throw new Error(result.error || 'Error al compartir ubicación');
         }
 
-        Alert.alert('✅ Ubicación Compartida',
-          `Tu ubicación ha sido actualizada correctamente.\n\n` +
-          `Lat: ${loc.coords.latitude.toFixed(6)}\n` +
-          `Lng: ${loc.coords.longitude.toFixed(6)}`
+        const googleMapsUrl = `https://maps.google.com/?q=${loc.coords.latitude},${loc.coords.longitude}`;
+
+        Alert.alert(
+          '✅ Ubicación Guardada',
+          `Tu ubicación ha sido registrada en el sistema.\n\n📍 Ver en mapa:\n${googleMapsUrl}`,
+          [
+            { text: 'OK' },
+            {
+              text: 'Compartir ahora',
+              onPress: () => {
+                setTimeout(() => {
+                  setLastLocation({
+                    lat: loc.coords.latitude,
+                    lng: loc.coords.longitude,
+                    updated_at: new Date().toISOString(),
+                  });
+                  shareLocationViaApps();
+                }, 100);
+              },
+            },
+          ]
         );
         loadLastLocation();
       } catch (fetchError: any) {
@@ -138,6 +180,32 @@ export function LocationShareScreen() {
     }
   }
 
+  async function shareLocationViaApps() {
+    try {
+      // Get current location
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permiso Denegado', 'Necesitamos acceso a tu ubicación');
+        return;
+      }
+
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const googleMapsUrl = `https://maps.google.com/?q=${loc.coords.latitude},${loc.coords.longitude}`;
+      const message = `📍 Mi ubicación actual:\n${googleMapsUrl}\n\n🚨 Compartido desde Alert-IO`;
+
+      const result = await Share.share({
+        message: message,
+        title: 'Mi ubicación de emergencia',
+      });
+
+      if (result.action === Share.sharedAction) {
+        Alert.alert('✅ Compartido', 'Ubicación compartida exitosamente');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Error al compartir ubicación');
+    }
+  }
+
   async function handleBackgroundToggle(value: boolean) {
     Alert.alert(
       'Ubicación en Segundo Plano',
@@ -168,6 +236,7 @@ export function LocationShareScreen() {
     );
   }
 
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -197,12 +266,22 @@ export function LocationShareScreen() {
 
         {lastLocation && (
           <View style={styles.lastLocationCard}>
-            <Text style={styles.lastLocationTitle}>Última ubicación compartida:</Text>
-            <Text style={styles.lastLocationText}>
-              Lat: {lastLocation.lat.toFixed(6)}, Lng: {lastLocation.lng.toFixed(6)}
-            </Text>
+            <View style={styles.lastLocationHeader}>
+              <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+              <Text style={styles.lastLocationTitle}>Última ubicación registrada</Text>
+            </View>
             <Text style={styles.lastLocationDate}>
-              {new Date(lastLocation.updated_at).toLocaleString('es-CO')}
+              {new Date(lastLocation.updated_at).toLocaleString('es-CO', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+            <Text style={styles.lastLocationCoords}>
+              📍 {lastLocation.lat.toFixed(6)}, {lastLocation.lng.toFixed(6)}
             </Text>
           </View>
         )}
@@ -303,24 +382,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F1F5F9',
   },
+  lastLocationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
   lastLocationTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
-    marginBottom: 8,
-    letterSpacing: 0.3,
-  },
-  lastLocationText: {
-    fontSize: 12,
-    color: '#64748B',
-    marginBottom: 6,
-    fontFamily: 'monospace',
-    fontWeight: '500',
+    letterSpacing: -0.2,
   },
   lastLocationDate: {
-    fontSize: 12,
-    color: '#94A3B8',
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 8,
     fontWeight: '500',
+    lineHeight: 20,
+  },
+  lastLocationCoords: {
+    fontSize: 13,
+    color: '#94A3B8',
+    fontFamily: 'monospace',
+    fontWeight: '600',
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   backgroundSection: {
     backgroundColor: '#fff',

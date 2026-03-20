@@ -210,19 +210,21 @@ export function SettingsScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <View style={styles.header}>
         <Text style={styles.title}>Ajustes</Text>
-        {!isEditing && (
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => setIsEditing(true)}
-          >
-            <Ionicons name="pencil" size={20} color="#3498db" />
-          </TouchableOpacity>
-        )}
       </View>
 
       <View style={styles.content}>
         <View style={styles.profileCard}>
-          <Text style={styles.sectionTitle}>Información Personal</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Información Personal</Text>
+            {!isEditing && (
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => setIsEditing(true)}
+              >
+                <Ionicons name="pencil" size={20} color="#0EA5E9" />
+              </TouchableOpacity>
+            )}
+          </View>
 
           <View style={styles.field}>
             <Text style={styles.fieldLabel}>Nombre completo</Text>
@@ -293,7 +295,7 @@ export function SettingsScreen() {
                   style={styles.editButton}
                   onPress={() => setIsEditingContact(true)}
                 >
-                  <Ionicons name="pencil" size={20} color="#e67e22" />
+                  <Ionicons name="pencil" size={20} color="#0EA5E9" />
                 </TouchableOpacity>
               )}
             </View>

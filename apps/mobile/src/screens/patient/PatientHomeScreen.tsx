@@ -11,6 +11,10 @@ import {
   FlatList,
   Dimensions,
   Vibration,
+  Modal,
+  Animated,
+  Share,
+  Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,13 +33,42 @@ export function PatientHomeScreen({ navigation }: any) {
   const [alarmSound, setAlarmSound] = useState<Audio.Sound | null>(null);
   const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // SOS Modal states
+  const [sosModalVisible, setSOSModalVisible] = useState(false);
+  const [countdown, setCountdown] = useState(10);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pulseAnimation = useRef(new Animated.Value(0.6)).current;
+
   useEffect(() => {
     loadEmergencyContact();
     setupAudio();
     return () => {
       stopAlarm();
+      stopCountdown();
     };
   }, [user]);
+
+  // Pulse animation effect
+  useEffect(() => {
+    if (sosModalVisible) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnimation, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnimation, {
+            toValue: 0.6,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      pulseAnimation.setValue(0.6);
+    }
+  }, [sosModalVisible]);
 
   async function setupAudio() {
     await Audio.setAudioModeAsync({
@@ -81,6 +114,27 @@ export function PatientHomeScreen({ navigation }: any) {
       Vibration.cancel();
     } catch (error) {
       console.error('Error stopping alarm:', error);
+    }
+  }
+
+  function startCountdown() {
+    setCountdown(10);
+    countdownIntervalRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          stopCountdown();
+          handleConfirmEmergency();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
+
+  function stopCountdown() {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
     }
   }
 
@@ -144,77 +198,186 @@ export function PatientHomeScreen({ navigation }: any) {
   async function handleSOS() {
     if (!user) return;
 
-    // Play alarm immediately
+    // Play alarm and show modal immediately
     await playAlarm();
+    setSOSModalVisible(true);
+    startCountdown();
+  }
 
+  async function handleStopAlarm() {
+    // User pressed STOP ALARM button - confirm emergency
+    stopCountdown();
+    setSOSModalVisible(false);
+    await handleConfirmEmergency();
+  }
+
+  async function handleCancelSOS() {
+    // User pressed cancel - was a mistake
+    stopCountdown();
+    await stopAlarm();
+    setSOSModalVisible(false);
+    Alert.alert('Cancelado', 'Alarma detenida. No se envió ninguna alerta.');
+  }
+
+  function handleProfileMenu() {
     Alert.alert(
-      '🚨 SOS EMERGENCIA 🚨',
-      'ALARMA ACTIVADA\n\n¿Confirmas la emergencia? Se notificará a tus contactos y médicos.',
+      profile?.full_name || 'Perfil',
+      'Selecciona una opción',
       [
+        {
+          text: 'Ver Perfil',
+          onPress: () => navigation.navigate('Settings'),
+        },
+        {
+          text: 'Cerrar Sesión',
+          style: 'destructive',
+          onPress: async () => {
+            Alert.alert(
+              '¿Cerrar Sesión?',
+              '¿Estás seguro que deseas salir?',
+              [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                  text: 'Salir',
+                  style: 'destructive',
+                  onPress: async () => {
+                    await supabase.auth.signOut();
+                  },
+                },
+              ]
+            );
+          },
+        },
         {
           text: 'Cancelar',
           style: 'cancel',
-          onPress: () => stopAlarm(),
         },
-        {
-          text: 'CONFIRMAR EMERGENCIA',
-          style: 'destructive',
-          onPress: async () => {
-            setSosLoading(true);
-            try {
-              // Get location
-              let location = null;
-              try {
-                const { status } = await Location.requestForegroundPermissionsAsync();
-                if (status === 'granted') {
-                  const loc = await Location.getCurrentPositionAsync({});
-                  location = {
-                    lat: loc.coords.latitude,
-                    lng: loc.coords.longitude,
-                    accuracy_m: loc.coords.accuracy || 0,
-                  };
-                }
-              } catch (e) {
-                console.warn('Failed to get location for SOS:', e);
-              }
-
-              // Call create_alert Edge Function
-              const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
-              const { data: { session } } = await supabase.auth.getSession();
-
-              const response = await fetch(`${supabaseUrl}/functions/v1/create_alert`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${session?.access_token}`,
-                },
-                body: JSON.stringify({
-                  patient_id: user.id,
-                  source: 'sos',
-                  triggered_by: 'patient_manual',
-                  payload: location || {},
-                }),
-              });
-
-              const result = await response.json();
-
-              if (!response.ok) {
-                throw new Error(result.error || 'Error al crear alerta');
-              }
-
-              await stopAlarm();
-              Alert.alert('✅ Alerta Enviada', 'Se ha notificado a tus contactos de emergencia y servicios médicos');
-            } catch (error: any) {
-              await stopAlarm();
-              Alert.alert('⚠️ Alarma Activada', 'ALARMA SONANDO - Busca ayuda inmediata\n\nError al enviar alerta: ' + (error.message || 'Error desconocido'));
-            } finally {
-              setSosLoading(false);
-            }
-          },
-        },
-      ],
-      { cancelable: false }
+      ]
     );
+  }
+
+  async function handleQuickShareLocation() {
+    if (!emergencyContact) {
+      Alert.alert(
+        'Sin Contacto de Emergencia',
+        'Necesitas configurar un contacto de emergencia primero.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Configurar', onPress: () => navigation.navigate('Settings') },
+        ]
+      );
+      return;
+    }
+
+    try {
+      // Request location permission
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permiso Denegado',
+          'Por favor habilita el acceso a ubicación en los ajustes de tu dispositivo'
+        );
+        return;
+      }
+
+      // Show loading
+      Alert.alert('Obteniendo ubicación...', 'Por favor espera');
+
+      // Get current location
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      const mapsUrl = `https://maps.google.com/?q=${loc.coords.latitude},${loc.coords.longitude}`;
+      const message =
+        `📍 Mi ubicación actual\n\n` +
+        `${mapsUrl}\n\n` +
+        `Compartida: ${new Date().toLocaleTimeString('es-CO')}\n\n` +
+        `Enviado desde Alert-IO`;
+
+      const phoneNumber = emergencyContact.phone.replace(/\s/g, '');
+      const smsUrl = `sms:${phoneNumber}${Platform.OS === 'ios' ? '&' : '?'}body=${encodeURIComponent(message)}`;
+
+      await Linking.openURL(smsUrl).catch((err) => {
+        console.error('Error opening SMS:', err);
+        // Fallback to share sheet
+        Share.share({
+          message,
+          title: '📍 Mi Ubicación',
+        });
+      });
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'No se pudo obtener la ubicación');
+    }
+  }
+
+  async function handleConfirmEmergency() {
+    if (!user) return;
+
+    setSosLoading(true);
+    await stopAlarm();
+
+    try {
+      // Get location
+      let location = null;
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          location = {
+            lat: loc.coords.latitude,
+            lng: loc.coords.longitude,
+          };
+        }
+      } catch (e) {
+        console.warn('Failed to get location for SOS:', e);
+      }
+
+      // Open SMS to emergency contact with location
+      if (emergencyContact) {
+        const patientName = profile?.full_name || 'Un paciente';
+        let message = `🚨 ${patientName} activó la alarma de emergencia\n\n`;
+
+        if (location) {
+          const mapsUrl = `https://maps.google.com/?q=${location.lat},${location.lng}`;
+          message += `Esta es su ubicación:\n${mapsUrl}\n\n`;
+        } else {
+          message += `No se pudo obtener la ubicación.\n\n`;
+        }
+
+        message += `Enviado desde Alert-IO`;
+
+        const phoneNumber = emergencyContact.phone.replace(/\s/g, '');
+        const smsUrl = `sms:${phoneNumber}${Platform.OS === 'ios' ? '&' : '?'}body=${encodeURIComponent(message)}`;
+
+        setTimeout(() => {
+          Linking.openURL(smsUrl).catch((err) => {
+            console.error('Error opening SMS:', err);
+            // Fallback to share sheet if SMS fails
+            Share.share({
+              message,
+              title: '🚨 EMERGENCIA - Mi Ubicación',
+            });
+          });
+        }, 300);
+      } else {
+        Alert.alert(
+          'Sin Contacto de Emergencia',
+          'No tienes un contacto de emergencia configurado.\n\n¿Deseas configurarlo ahora?',
+          [
+            { text: 'Ahora no', style: 'cancel' },
+            { text: 'Configurar', onPress: () => navigation.navigate('Settings') },
+          ]
+        );
+      }
+    } catch (error: any) {
+      console.error('Error in SOS:', error);
+      Alert.alert('Error', 'Hubo un problema. Llama al 123 directamente.');
+    } finally {
+      setSosLoading(false);
+    }
   }
 
   return (
@@ -224,9 +387,9 @@ export function PatientHomeScreen({ navigation }: any) {
           <Text style={styles.greeting}>Hola, {profile?.full_name}</Text>
           <Text style={styles.subtitle}>Alert-IO</Text>
         </View>
-        <View style={styles.headerIcon}>
+        <TouchableOpacity style={styles.headerIcon} onPress={handleProfileMenu}>
           <Ionicons name="shield-checkmark" size={32} color="#0EA5E9" />
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* SOS Button */}
@@ -320,12 +483,12 @@ export function PatientHomeScreen({ navigation }: any) {
         <View style={styles.actionsGrid}>
           <TouchableOpacity
             style={styles.actionCard}
-            onPress={() => navigation.navigate('Location')}
+            onPress={handleQuickShareLocation}
           >
             <View style={styles.actionIconContainer}>
-              <Ionicons name="location" size={24} color="#10B981" />
+              <Ionicons name="paper-plane" size={24} color="#10B981" />
             </View>
-            <Text style={styles.actionText}>Compartir Ubicación</Text>
+            <Text style={styles.actionText}>Enviar Ubicación</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -337,8 +500,72 @@ export function PatientHomeScreen({ navigation }: any) {
             </View>
             <Text style={styles.actionText}>Ver Historial</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => navigation.navigate('Location')}
+          >
+            <View style={styles.actionIconContainer}>
+              <Ionicons name="settings-outline" size={24} color="#64748B" />
+            </View>
+            <Text style={styles.actionText}>Configurar Ubicación</Text>
+          </TouchableOpacity>
         </View>
       </View>
+
+      {/* SOS Modal */}
+      <Modal
+        visible={sosModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelSOS}
+      >
+        <Animated.View
+          style={[
+            styles.modalOverlay,
+            {
+              opacity: pulseAnimation,
+            },
+          ]}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconContainer}>
+              <Ionicons name="alert-circle" size={80} color="#fff" />
+            </View>
+
+            <Text style={styles.modalTitle}>🚨 ALARMA SOS ACTIVA</Text>
+
+            <View style={styles.countdownContainer}>
+              <Text style={styles.countdownText}>{countdown}</Text>
+              <Text style={styles.countdownLabel}>
+                {countdown === 1 ? 'segundo' : 'segundos'}
+              </Text>
+            </View>
+
+            <Text style={styles.modalDescription}>
+              La alerta se enviará automáticamente cuando el contador llegue a cero
+            </Text>
+
+            <TouchableOpacity
+              style={styles.stopAlarmButton}
+              onPress={handleStopAlarm}
+              activeOpacity={0.8}
+            >
+              <View style={styles.stopAlarmButtonInner}>
+                <Ionicons name="hand-left" size={48} color="#DC2626" />
+                <Text style={styles.stopAlarmButtonText}>DETENER{'\n'}ALARMA</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleCancelSOS}
+            >
+              <Text style={styles.cancelButtonText}>Fue un error - Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -475,10 +702,11 @@ const styles = StyleSheet.create({
   },
   actionsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
   actionCard: {
-    flex: 1,
+    width: '48%',
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 16,
@@ -506,5 +734,89 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     letterSpacing: -0.2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: '#DC2626',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  modalIconContainer: {
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 32,
+    letterSpacing: 1,
+  },
+  countdownContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  countdownText: {
+    fontSize: 96,
+    fontWeight: '700',
+    color: '#fff',
+    lineHeight: 96,
+  },
+  countdownLabel: {
+    fontSize: 16,
+    color: '#FEE2E2',
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  modalDescription: {
+    fontSize: 16,
+    color: '#FEE2E2',
+    textAlign: 'center',
+    marginBottom: 48,
+    paddingHorizontal: 20,
+    lineHeight: 24,
+    fontWeight: '500',
+  },
+  stopAlarmButton: {
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 32,
+    elevation: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+  },
+  stopAlarmButtonInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stopAlarmButtonText: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#DC2626',
+    textAlign: 'center',
+    marginTop: 16,
+    letterSpacing: 1,
+    lineHeight: 28,
+  },
+  cancelButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });
