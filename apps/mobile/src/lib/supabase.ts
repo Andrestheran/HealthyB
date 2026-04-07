@@ -5,6 +5,11 @@ import Constants from 'expo-constants';
 const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
+console.log('🔧 Supabase Config:');
+console.log('  URL:', supabaseUrl);
+console.log('  From extra:', Constants.expoConfig?.extra?.supabaseUrl);
+console.log('  From env:', process.env.EXPO_PUBLIC_SUPABASE_URL);
+
 // Custom storage using SecureStore for tokens
 const ExpoSecureStoreAdapter = {
   getItem: (key: string) => {

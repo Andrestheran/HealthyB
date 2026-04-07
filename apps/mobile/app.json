@@ -28,7 +28,7 @@
             "localhost": {
               "NSExceptionAllowsInsecureHTTPLoads": true
             },
-            "192.168.40.21": {
+            "127.0.0.1": {
               "NSExceptionAllowsInsecureHTTPLoads": true
             }
           }
@@ -72,7 +72,9 @@
     "extra": {
       "eas": {
         "projectId": "alert-io-local"
-      }
+      },
+      "supabaseUrl": "http://127.0.0.1:54321",
+      "supabaseAnonKey": "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"
     }
   }
 }
