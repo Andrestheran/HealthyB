@@ -104,31 +104,13 @@ serve(async (req) => {
   }
 
   try {
-    // ⚠️ TEMPORARY: Authentication disabled for local development testing
-    // Due to JWT verification bug in Edge Runtime v1.70.5
-    // TODO: Re-enable authentication before production deployment
-
-    // Hardcoded patient ID for demo user: patient_demo@acvguard.test
-    const patientId = '585a5e01-3b17-401e-9bc7-9984c0a6502f';
-
-    console.log('⚠️ WARNING: Using hardcoded patient_id for testing (auth disabled)');
-
-    // Create supabase client with SERVICE ROLE to bypass RLS
-    // (required because we disabled auth, so auth.uid() is null)
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // ⚠️ COMMENTED OUT: Original authentication code (re-enable for production)
-    /*
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing authorization header');
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const supabaseServiceRole = createClient(
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
@@ -139,24 +121,15 @@ serve(async (req) => {
       if (parts.length !== 3) {
         throw new Error('Invalid token format');
       }
-
       const payload = JSON.parse(atob(parts[1]));
       patientId = payload.sub;
-
       if (!patientId) {
         throw new Error('Invalid token payload');
-      }
-
-      const { data: userExists, error: userError } = await supabaseServiceRole.auth.admin.getUserById(patientId);
-
-      if (userError || !userExists) {
-        throw new Error('User not found in database');
       }
     } catch (parseError: any) {
       console.error('Auth error:', parseError);
       throw new Error('Not authenticated: ' + (parseError.message || 'Invalid token'));
     }
-    */
     const input: ChatRequest = await req.json();
     const { message, session_id, stream = false } = input;
 

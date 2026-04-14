@@ -2,29 +2,7 @@
 // Provides unified API for iOS HealthKit and Android Health Connect
 
 import { Platform } from 'react-native';
-import AppleHealthKit, {
-  HealthValue,
-  HealthKitPermissions,
-} from 'react-native-health';
-import { VitalSignType, SmartwatchType } from '@alert-io/shared';
-
-// Health permissions
-const permissions: HealthKitPermissions = {
-  permissions: {
-    read: [
-      AppleHealthKit.Constants.Permissions.HeartRate,
-      AppleHealthKit.Constants.Permissions.BloodPressureDiastolic,
-      AppleHealthKit.Constants.Permissions.BloodPressureSystolic,
-      AppleHealthKit.Constants.Permissions.OxygenSaturation,
-      AppleHealthKit.Constants.Permissions.RespiratoryRate,
-      AppleHealthKit.Constants.Permissions.BodyTemperature,
-      AppleHealthKit.Constants.Permissions.SleepAnalysis,
-      AppleHealthKit.Constants.Permissions.Steps,
-      AppleHealthKit.Constants.Permissions.DistanceWalkingRunning,
-    ],
-    write: [],
-  },
-};
+import { VitalSignType, SmartwatchType } from '../shared';
 
 export interface VitalSignReading {
   type: VitalSignType;
@@ -47,15 +25,40 @@ export interface HealthData {
 
 class HealthKitManager {
   private isInitialized = false;
+  private AppleHealthKit: any = null;
+
+  private async getKit() {
+    if (!this.AppleHealthKit) {
+      this.AppleHealthKit = require('react-native-health').default;
+    }
+    return this.AppleHealthKit;
+  }
 
   async initialize(): Promise<boolean> {
     if (Platform.OS !== 'ios') {
-      console.warn('HealthKit is only available on iOS');
       return false;
     }
 
+    const kit = await this.getKit();
+    const permissions = {
+      permissions: {
+        read: [
+          kit.Constants.Permissions.HeartRate,
+          kit.Constants.Permissions.BloodPressureDiastolic,
+          kit.Constants.Permissions.BloodPressureSystolic,
+          kit.Constants.Permissions.OxygenSaturation,
+          kit.Constants.Permissions.RespiratoryRate,
+          kit.Constants.Permissions.BodyTemperature,
+          kit.Constants.Permissions.SleepAnalysis,
+          kit.Constants.Permissions.Steps,
+          kit.Constants.Permissions.DistanceWalkingRunning,
+        ],
+        write: [],
+      },
+    };
+
     return new Promise((resolve) => {
-      AppleHealthKit.initHealthKit(permissions, (error: string) => {
+      kit.initHealthKit(permissions, (error: string) => {
         if (error) {
           console.error('Error initializing HealthKit:', error);
           resolve(false);
@@ -72,13 +75,10 @@ class HealthKitManager {
       return false;
     }
 
+    const kit = await this.getKit();
     return new Promise((resolve) => {
-      AppleHealthKit.isAvailable((error: any, available: boolean) => {
-        if (error) {
-          resolve(false);
-        } else {
-          resolve(available);
-        }
+      kit.isAvailable((error: any, available: boolean) => {
+        resolve(error ? false : available);
       });
     });
   }
@@ -86,13 +86,14 @@ class HealthKitManager {
   async getLatestHeartRate(): Promise<VitalSignReading | null> {
     if (!this.isInitialized) return null;
 
+    const kit = await this.getKit();
     return new Promise((resolve) => {
       const options = {
         unit: 'bpm',
         startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
       };
 
-      AppleHealthKit.getHeartRateSamples(options, (error: any, results: any[]) => {
+      kit.getHeartRateSamples(options, (error: any, results: any[]) => {
         if (error || !results || results.length === 0) {
           resolve(null);
         } else {
@@ -111,13 +112,14 @@ class HealthKitManager {
   async getLatestBloodPressure(): Promise<BloodPressureReading | null> {
     if (!this.isInitialized) return null;
 
+    const kit = await this.getKit();
     return new Promise((resolve) => {
       const options = {
         unit: 'mmHg',
         startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
       };
 
-      AppleHealthKit.getBloodPressureSamples(options, (error: any, results: any[]) => {
+      kit.getBloodPressureSamples(options, (error: any, results: any[]) => {
         if (error || !results || results.length === 0) {
           resolve(null);
         } else {
@@ -135,19 +137,20 @@ class HealthKitManager {
   async getLatestOxygenSaturation(): Promise<VitalSignReading | null> {
     if (!this.isInitialized) return null;
 
+    const kit = await this.getKit();
     return new Promise((resolve) => {
       const options = {
         startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
       };
 
-      AppleHealthKit.getOxygenSaturationSamples(options, (error: any, results: any[]) => {
+      kit.getOxygenSaturationSamples(options, (error: any, results: any[]) => {
         if (error || !results || results.length === 0) {
           resolve(null);
         } else {
           const latest = results[results.length - 1];
           resolve({
             type: VitalSignType.BLOOD_OXYGEN,
-            value: latest.value * 100, // Convert to percentage
+            value: latest.value * 100,
             unit: '%',
             measured_at: latest.startDate,
           });
@@ -159,12 +162,11 @@ class HealthKitManager {
   async getStepsToday(): Promise<VitalSignReading | null> {
     if (!this.isInitialized) return null;
 
+    const kit = await this.getKit();
     return new Promise((resolve) => {
-      const options = {
-        date: new Date().toISOString(),
-      };
+      const options = { date: new Date().toISOString() };
 
-      AppleHealthKit.getStepCount(options, (error: any, results: any) => {
+      kit.getStepCount(options, (error: any, results: any) => {
         if (error || !results) {
           resolve(null);
         } else {
@@ -182,24 +184,24 @@ class HealthKitManager {
   async getSleepHoursLastNight(): Promise<VitalSignReading | null> {
     if (!this.isInitialized) return null;
 
+    const kit = await this.getKit();
     return new Promise((resolve) => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      yesterday.setHours(20, 0, 0, 0); // 8 PM yesterday
+      yesterday.setHours(20, 0, 0, 0);
 
       const today = new Date();
-      today.setHours(10, 0, 0, 0); // 10 AM today
+      today.setHours(10, 0, 0, 0);
 
       const options = {
         startDate: yesterday.toISOString(),
         endDate: today.toISOString(),
       };
 
-      AppleHealthKit.getSleepSamples(options, (error: any, results: any[]) => {
+      kit.getSleepSamples(options, (error: any, results: any[]) => {
         if (error || !results || results.length === 0) {
           resolve(null);
         } else {
-          // Calculate total sleep hours
           let totalMinutes = 0;
           results.forEach((sample: any) => {
             if (sample.value === 'ASLEEP' || sample.value === 'INBED') {
@@ -230,64 +232,39 @@ class HealthKitManager {
     ]);
 
     const vital_signs: VitalSignReading[] = [];
-
     if (heartRate) vital_signs.push(heartRate);
     if (oxygenSaturation) vital_signs.push(oxygenSaturation);
     if (steps) vital_signs.push(steps);
     if (sleepHours) vital_signs.push(sleepHours);
 
-    return {
-      vital_signs,
-      blood_pressure: bloodPressure,
-    };
+    return { vital_signs, blood_pressure: bloodPressure };
   }
 
   async getConnectedWatchInfo(): Promise<{ type: SmartwatchType; name: string; model: string } | null> {
-    // For iOS, check if Apple Watch is paired
-    // This is a simplified check - in production you'd use WatchConnectivity
     if (Platform.OS === 'ios') {
       const available = await this.isAvailable();
       if (available) {
-        return {
-          type: SmartwatchType.APPLE_WATCH,
-          name: 'Apple Watch',
-          model: 'Unknown', // Would need WatchConnectivity to get actual model
-        };
+        return { type: SmartwatchType.APPLE_WATCH, name: 'Apple Watch', model: 'Unknown' };
       }
     }
-
     return null;
   }
 }
 
-// For Android - Health Connect integration (placeholder)
-// In production, implement using @react-native-community/google-fit or react-native-health-connect
 class HealthConnectManager {
   async initialize(): Promise<boolean> {
-    if (Platform.OS !== 'android') {
-      return false;
-    }
-
-    // TODO: Implement Health Connect initialization
-    console.warn('Health Connect not yet implemented');
     return false;
   }
 
   async getAllLatestVitals(): Promise<HealthData> {
-    // TODO: Implement Health Connect data fetching
-    return {
-      vital_signs: [],
-      blood_pressure: null,
-    };
+    return { vital_signs: [], blood_pressure: null };
   }
 
   async getConnectedWatchInfo(): Promise<{ type: SmartwatchType; name: string; model: string } | null> {
-    // TODO: Implement Wear OS watch detection
     return null;
   }
 }
 
-// Unified API
 export const healthManager = Platform.OS === 'ios'
   ? new HealthKitManager()
   : new HealthConnectManager();

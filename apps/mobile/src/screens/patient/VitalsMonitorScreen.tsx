@@ -16,7 +16,7 @@ import { supabase } from '../../lib/supabase';
 import { healthManager } from '../../lib/healthKit';
 import { fallDetectionService } from '../../lib/fallDetection';
 import Constants from 'expo-constants';
-import { VitalSignType, SmartwatchType } from '@alert-io/shared';
+import { VitalSignType, SmartwatchType } from '../../shared';
 
 export function VitalsMonitorScreen() {
   const { user } = useAuth();

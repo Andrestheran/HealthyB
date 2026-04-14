@@ -23,15 +23,7 @@
         "NSHealthShareUsageDescription": "Alert-IO necesita acceso a tus datos de salud para monitorear signos vitales y detectar anomalías.",
         "NSHealthUpdateUsageDescription": "Alert-IO necesita actualizar tus datos de salud para registrar eventos.",
         "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": true,
-          "NSExceptionDomains": {
-            "localhost": {
-              "NSExceptionAllowsInsecureHTTPLoads": true
-            },
-            "127.0.0.1": {
-              "NSExceptionAllowsInsecureHTTPLoads": true
-            }
-          }
+          "NSAllowsArbitraryLoads": false
         }
       },
       "entitlements": {
@@ -50,7 +42,9 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
         "ACTIVITY_RECOGNITION",
-        "BODY_SENSORS"
+        "BODY_SENSORS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -71,10 +65,11 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "alert-io-local"
+        "projectId": "38ab03af-7dca-4860-8aa5-e9e60c780faf"
       },
-      "supabaseUrl": "http://127.0.0.1:54321",
-      "supabaseAnonKey": "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"
-    }
+      "supabaseUrl": "https://uscgngtkudqdutkxmyrv.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzY2duZ3RrdWRxZHV0a3hteXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMTcyMTEsImV4cCI6MjA5MTY5MzIxMX0.8hM8EHsIt5kYDc1OtT7yghmrrtQLrmh0ZI6IuSSgoco"
+    },
+    "owner": "andrestheran"
   }
 }

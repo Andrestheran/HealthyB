@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "38ab03af-7dca-4860-8aa5-e9e60c780faf"
+      }
+    },
+    "android": {
+      "package": "com.alertio.app"
+    }
+  }
+}

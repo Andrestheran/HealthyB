@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
-import { Role } from '@alert-io/shared';
+import { Role } from '../../shared';
 
 export function SignupScreen({ navigation }: any) {
   const { signUp } = useAuth();

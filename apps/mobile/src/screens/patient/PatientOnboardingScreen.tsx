@@ -13,7 +13,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { Sex } from '@alert-io/shared';
+import { Sex } from '../../shared';
 
 export function PatientOnboardingScreen({ navigation }: any) {
   const { user, profile, refreshProfile } = useAuth();

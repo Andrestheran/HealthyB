@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 13.2.0"
+    "version": ">= 13.2.0",
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -20,7 +21,9 @@
       },
       "ios": {
         "simulator": false
-      }
+      },
+      "node": "18.20.4",
+      "npm": "10.2.5"
     },
     "production": {
       "env": {

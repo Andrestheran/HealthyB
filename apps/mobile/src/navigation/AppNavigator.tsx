@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
-import { Role } from '@alert-io/shared';
+import { Role } from '../shared';
 
 // Auth screens
 import { LoginScreen } from '../screens/auth/LoginScreen';

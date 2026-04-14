@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import { AIChatMessage, AIChatSession } from '@alert-io/shared';
+import { AIChatMessage, AIChatSession } from '../shared';
 import Constants from 'expo-constants';
 
 export function useAIChat(sessionId?: string | null) {

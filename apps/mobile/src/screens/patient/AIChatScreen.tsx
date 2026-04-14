@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAIChat } from '../../hooks/useAIChat';
 import { detectEmergencyKeywords, showEmergencyAlert } from '../../lib/emergencyDetection';
-import { AIChatMessage } from '@alert-io/shared';
+import { AIChatMessage } from '../../shared';
 
 export function AIChatScreen({ navigation }: any) {
   const { user } = useAuth();
